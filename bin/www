@@ -11,10 +11,11 @@ var http = require('http');
 /**
  * Get port from environment and store in Express.
  */
-
-var port = normalizePort(process.env.PORT || '3000');
+const PORTNUM=32286
+var port = normalizePort(process.env.PORT || PORTNUM );
 app.set('port', port);
-
+const LOGGER=console.log
+LOGGER(`listening to ${PORTNUM}`)
 /**
  * Create HTTP server.
  */

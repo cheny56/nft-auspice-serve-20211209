@@ -1,20 +1,21 @@
-drop if exists table balances ;
-drop if exists table items ;
-drop if exists table multicopies ;
-drop if exists table iteminstances ;
-drop if exists table filestorages ;
-drop if exists table sales ;
-drop if exists table bids ;
-drop if exists table logbids ;
-drop if exists table paymeans ;
-drop if exists table itemhistory ;
-drop if exists table logactions ;
-drop if exists table logfavorites ;
-drop if exists table comments ;
-drop if exists table adminusers ;
-drop if exists table adminfees ;
-drop if exists table bundles ;
-drop if exists table bundlehasitems ;
+drop table if exists balances ;
+drop table if exists items ;
+drop table if exists multicopies ;
+drop table if exists iteminstances ;
+drop table if exists filestorages ;
+drop table if exists sales ;
+drop table if exists bids ;
+drop table if exists logbids ;
+drop table if exists paymeans ;
+drop table if exists itemhistory ;
+drop table if exists logactions ;
+drop table if exists logfavorites ;
+drop table if exists comments ;
+drop table if exists adminusers ;
+drop table if exists adminfees ;
+drop table if exists bundles ;
+drop table if exists bundlehasitems ;
+drop table if exists users ;
 
 create table balances (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT primary key,
