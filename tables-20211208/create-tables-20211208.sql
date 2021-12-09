@@ -1,3 +1,20 @@
+drop if exists table balances ;
+drop if exists table items ;
+drop if exists table multicopies ;
+drop if exists table iteminstances ;
+drop if exists table filestorages ;
+drop if exists table sales ;
+drop if exists table bids ;
+drop if exists table logbids ;
+drop if exists table paymeans ;
+drop if exists table itemhistory ;
+drop if exists table logactions ;
+drop if exists table logfavorites ;
+drop if exists table comments ;
+drop if exists table adminusers ;
+drop if exists table adminfees ;
+drop if exists table bundles ;
+drop if exists table bundlehasitems ;
 
 create table balances (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT primary key,
@@ -46,7 +63,6 @@ create table iteminstances (
   `updatedat` datetime DEFAULT NULL ON UPDATE current_timestamp()
 	, itemid varchar(100)
 	, serialnumber int unsigned
-	, 
 );
 create table filestorages (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT primary key,
@@ -108,7 +124,7 @@ create table logbids (
 	, price varchar(20)
 	, priceunit varchar(20) 
 );
-create paymeans (
+create table paymeans (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT primary key,
   `createdat` datetime DEFAULT current_timestamp(),
   `updatedat` datetime DEFAULT NULL ON UPDATE current_timestamp()
