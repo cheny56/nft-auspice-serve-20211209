@@ -130,7 +130,6 @@ create table itemhistory (
 	, priceunit varchar(20)
 	, typestr varchar(20) comment 'MINT,BID,MINT_SELL,SALE,APPROVE_BID,CANCEL_BID,DENY_BID'
 	, type tinyint comment ''
-	, 
 );
 create table logactions (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT primary key,
@@ -139,7 +138,6 @@ create table logactions (
 	, username varchar(80)
 	, typestr varchar(20) comment ''
 	, type tinyint
-	, 
 ) ;
 create table logfavorites (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT primary key,
@@ -173,12 +171,6 @@ create table adminfees (
 	, useraction varchar(50) comment 'user actions which are charged'
 	, feerate int unsigned comment 'unit is in basis point'
 	, writer varchar(30) comment '해당 행 기록 혹은 업데이트한 관리자'
-);
-create table adminfees ( 
-  `id` int(10) unsigned NOT NULL AUTO_INCREMENT primary key,
-  `createdat` datetime DEFAULT current_timestamp(),
-  `updatedat` datetime DEFAULT NULL ON UPDATE current_timestamp()
-
 );
  CREATE TABLE `items02` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
@@ -321,5 +313,28 @@ CREATE TABLE `collections` (
   `createdat` datetime DEFAULT current_timestamp(),
   `updatedat` datetime DEFAULT NULL ON UPDATE current_timestamp(),
   `username` varchar(80) DEFAULT NULL COMMENT 'may well be address',
-
+	name varchar(500)
+	, description varchar(1000)
 );	
+
+CREATE TABLE `collectionhasitems` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT primary key ,
+  `createdat` datetime DEFAULT current_timestamp(),
+  `updatedat` datetime DEFAULT NULL ON UPDATE current_timestamp(),
+	collectionid int unsigned comment 'collection id'
+	, itemid varchar(100) comment ''
+);
+create table bundles ( 
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT primary key ,
+  `createdat` datetime DEFAULT current_timestamp(),
+  `updatedat` datetime DEFAULT NULL ON UPDATE current_timestamp(),
+	name varchar(500)
+	, description varchar(1000)	
+) ;
+create table bundlehasitems ( 
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT primary key ,
+  `createdat` datetime DEFAULT current_timestamp(),
+  `updatedat` datetime DEFAULT NULL ON UPDATE current_timestamp(),
+	bundleid int unsigned comment 'bundle id'
+	, itemid varchar(100) comment ''
+);
