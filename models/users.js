@@ -43,6 +43,14 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: true,
       defaultValue: 0,
       comment: '사용자권한레벨'
+    },
+    profileimageurl: {
+      type: DataTypes.STRING(500),
+      allowNull: true
+    },
+    coverimageurl: {
+      type: DataTypes.STRING(500),
+      allowNull: true
     }
   }, {
     sequelize,

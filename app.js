@@ -6,7 +6,12 @@ var logger = require('morgan');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-
+const ordersrouter=require('./routes/orders')
+const favoritesrouter=require('./routes/favorites' )
+const itemsrouter=require('./routes/items' )
+const collectionsrouter=require('./routes/collections' )
+const contentsrouter=require('./routes/contents' )
+const bundlesrouter=require('./routes/bundles' )
 var app = express();
 
 // view engine setup
@@ -21,6 +26,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
+app.use('/orders', ordersrouter);
+app.use('/favorites', favoritesrouter);
+app.use('/items', itemsrouter);
+app.use('/collections', collectionsrouter )
+app.use('/contents', contentsrouter )
+app.use('/bundles', bundlesrouter )
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -39,3 +50,7 @@ app.use(function(err, req, res, next) {
 });
 
 module.exports = app;
+
+const cron=require('node-cron'),moment=require('moment');
+  cron.schedule('*/1 * * * *',()=>{  console.log(moment().format('HH:mm:ss, YYYY-MM-DD'))
+})
