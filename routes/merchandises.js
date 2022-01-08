@@ -1,8 +1,6 @@
 var express = require('express')
 var router = express.Router()
-const { generaterandomhex ,LOGGER , gettimestr , gettimestr_raw , filter_json_by_nonnull_criteria 
-	, isuuid
-}=require('../utils/common')
+const { generaterandomhex ,LOGGER , gettimestr , gettimestr_raw , filter_json_by_nonnull_criteria }=require('../utils/common')
 const {findone,findall , createifnoneexistent , createorupdaterow , updaterow , incrementrow , createrow }=require('../utils/db')
 const {createifnoneexistent:createifnoneexistent_dbmon , updaterow:updaterow_dbmon }=require('../utils/dbmon')
 const {get_ipfsformatcid_file}=require('../utils/ipfscid')
@@ -30,33 +28,9 @@ const {MAP_ACTIONTYPE_CODE , MAP_CODE_ACTIONTYPE}=require('../configs/map-action
 const STRINGER=JSON.stringify
 const PARSER=JSON.parse
 const {hashfile}=require('../utils/largefilehash')
-let { queryitemdata_filter }=require('../utils/db-custom')
-router.get( '/item/:id' , (req,res)=>{
-	let {	id }=req.params // uuid_or_itemid 
-	let jfilter={}
-	if( isuuid( id ) ) {
-		jfilter['uuid'] = id
-	}	else { // no validate for itemid due to missing validation method , default case
-		jfilter['itemid']= id
-	}
-	queryitemdata_filter ( jfilter ).then(resp=>{
-		respok ( res, null , null , {respdata: resp			
-		})
-	})
-})
-router.get('/searches', (req,res)=>{
-	let {		searchkey
-	}=req.query
-})
+
 router.get( '/' , (req,res)=>{
-	let {
-		categorystr
-		, orderbykey
-		, orderbyval
-	}=req.query
-			
 })
 
 module.exports = router;
-
 

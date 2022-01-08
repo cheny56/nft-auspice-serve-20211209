@@ -43,9 +43,12 @@ router.post('/taker/ididtake/:txhash' , (req,res)=>{
 router.post('/maker', (req, res, next) => { // 
 	const username=getusernamefromsession(req)
   if(username) {} else {resperrwithstatus(res,403,messages.MSG_PLEASELOGIN);return}
-	let { itemid , amount , buyorsell  }=req.body
+	let { itemid 
+		, amount 
+		, buyorsell }=req.body
 	amount = + amount
-  findone('itembalances' , { username , itemid }).then(resp => {
+  findone('itembalances' , { username 
+		, itemid }).then(resp => {
 		if(resp){}
 		else {resperr(res, messages.MSG_BALANCE_NOT_ENOUGH , 40320 );  return }
 		let {avail}=resp
