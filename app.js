@@ -52,5 +52,5 @@ app.use(function(err, req, res, next) {
 module.exports = app;
 
 const cron=require('node-cron'),moment=require('moment');
-  cron.schedule('*/1 * * * *',()=>{  console.log(moment().format('HH:mm:ss, YYYY-MM-DD'))
+  cron.schedule('*/1 * * * *',()=>{  console.log(moment().format('HH:mm:ss, YYYY-MM-DD') , '@itemverse' )
 })

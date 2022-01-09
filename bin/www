@@ -15,7 +15,7 @@ const PORTNUM=32287
 var port = normalizePort(process.env.PORT || PORTNUM );
 app.set('port', port);
 const LOGGER=console.log
-LOGGER(`listening to ${PORTNUM}`)
+LOGGER(`listening to ${PORTNUM} @itemverse`)
 /**
  * Create HTTP server.
  */

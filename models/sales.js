@@ -63,6 +63,10 @@ module.exports = function(sequelize, DataTypes) {
     priceunit: {
       type: DataTypes.STRING(20),
       allowNull: true
+    },
+    hashid: {
+      type: DataTypes.STRING(80),
+      allowNull: true
     }
   }, {
     sequelize,

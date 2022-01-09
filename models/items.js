@@ -60,6 +60,27 @@ module.exports = function(sequelize, DataTypes) {
     typestr: {
       type: DataTypes.STRING(20),
       allowNull: true
+    },
+    tokenid: {
+      type: DataTypes.BIGINT,
+      allowNull: true
+    },
+    decimals: {
+      type: DataTypes.INTEGER(11),
+      allowNull: true,
+      defaultValue: 0
+    },
+    totalsupply: {
+      type: DataTypes.BIGINT,
+      allowNull: true
+    },
+    uuid: {
+      type: DataTypes.STRING(80),
+      allowNull: true
+    },
+    categorystr: {
+      type: DataTypes.STRING(20),
+      allowNull: true
     }
   }, {
     sequelize,

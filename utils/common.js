@@ -2,8 +2,11 @@
 const moment=require('moment')
 const KEYS=Object.keys
 const ISFINITE=Number.isFinite
-
 const { v4 : uuidv4 }=require('uuid')
+// /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+const isuuid=str=>{
+	return str.match ( /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i	)
+}
 function generaterandomstr (length) {
   var result           = '';	var characters       = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   var charactersLength = characters.length;
@@ -69,7 +72,8 @@ const generaterandomstr_charset=(length,charsetcode)=>{let characters
 }
 
 // => 594ae48dcdc55777fdc05ceea4b40c45ec5118946a12797228dd8106e8f1e5fb
-module.exports={generaterandomhex, LOGGER:console.log , cyrb53 , hash53:cyrb53 , hashFnv32a,gettimestr 
+module.exports={generaterandomhex, LOGGER:console.log , cyrb53 , hash53:cyrb53 , hashFnv32a,gettimestr
+	, isuuid 
 	,gettimestr_raw , gettimestrwithspace , hashviasha256 
 	, filter_json_by_nonnull_criteria
 	, generaterandomstr

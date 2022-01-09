@@ -10,11 +10,14 @@ const MAP_MARKETTYPE_ID={
   , secondary : 2
   , entire : 3
 }
+const NAMESPACE_FOR_HASH='itemverse'
+ 
 module.exports={
   CDN_PATH
   , PRICEUNIT_DEF
   , TIMESTRFORMAT
   , MAP_MARKETTYPE_ID
   , B_ENFORCE_NO_DUPLICATE_ITEMID
+	, NAMESPACE_FOR_HASH
 }
 

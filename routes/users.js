@@ -93,11 +93,11 @@ router.post('/login/crypto', async(req,res)=>{
      })
     let respfind =await findone('users', {username})
     if(respfind){return} else {}
-    const myreferercode=generaterandomstr_charset ( 8 , 'notconfusing')
+    const myreferercode=generaterandomstr_charset ( 10 , 'notconfusing')
     const {nickname,storename} = createnicks() //255**2 *301sentence
 LOGGER('a2NLDNt0o7',nickname,storename)
 //    const nickname= generateSlug(3,{format:'camel'}) //255**2 *301sentence
-    let randomdesc=getrandomwords(12) ; randomdesc=STRINGER(randomdesc)
+    let randomdesc = getrandomwords(12) ; randomdesc=STRINGER(randomdesc)
     createrow( 'users', {
       username
       , type: 0
