@@ -2,7 +2,10 @@
 const moment=require('moment')
 const KEYS=Object.keys
 const ISFINITE=Number.isFinite
-const { v4 : uuidv4 }=require('uuid')
+const { v4 : uuidv4 , v5 : uuidv5 }=require('uuid')
+
+const separatebycommas=strcsv=>strcsv.split(/,/).filter(elem=> elem && elem.length )
+const create_uuid_via_namespace = str=> uuidv5 ( str , Array.from ( Array(16).keys() ) )
 // /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const isuuid=str=>{
 	return str.match ( /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i	)
@@ -23,6 +26,8 @@ const TIMEFORMATSTR='YYYY-MM-DDTHH:mm:ss'
 const TIMEFORMATSTR_RAW='YYYYMMDDHHmmss'
 const gettimestr=_=>moment().format(TIMEFORMATSTR)
 const gettimestr_raw=_=>moment().format(TIMEFORMATSTR_RAW)
+const gettimeunix=_=>moment().unix()
+
 const cyrb53 = function(str, seed = 0) {
 	let h1 = 0xdeadbeef ^ seed, h2 = 0x41c6ce57 ^ seed;
 	for (let i = 0, ch; i < str.length; i++) {
@@ -73,14 +78,19 @@ const generaterandomstr_charset=(length,charsetcode)=>{let characters
 
 // => 594ae48dcdc55777fdc05ceea4b40c45ec5118946a12797228dd8106e8f1e5fb
 module.exports={generaterandomhex, LOGGER:console.log , cyrb53 , hash53:cyrb53 , hashFnv32a,gettimestr
+	, create_uuid_via_namespace 
 	, isuuid 
-	,gettimestr_raw , gettimestrwithspace , hashviasha256 
+	, gettimestr_raw 
+	, gettimestrwithspace 
+	, gettimeunix
+	, hashviasha256 
 	, filter_json_by_nonnull_criteria
 	, generaterandomstr
 	, generaterandomstr_charset
 	, ISFINITE
 	, KEYS
 	, uuidv4
+	, separatebycommas
 }
 
 const main=_=>{

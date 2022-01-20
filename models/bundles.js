@@ -24,6 +24,19 @@ module.exports = function(sequelize, DataTypes) {
     description: {
       type: DataTypes.STRING(1000),
       allowNull: true
+    },
+    uuid: {
+      type: DataTypes.STRING(80),
+      allowNull: true
+    },
+    username: {
+      type: DataTypes.STRING(80),
+      allowNull: true
+    },
+    active: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 1
     }
   }, {
     sequelize,

@@ -3,7 +3,9 @@ var router = express.Router()
 const { generaterandomhex ,LOGGER , gettimestr , gettimestr_raw , filter_json_by_nonnull_criteria 
 	, isuuid
 }=require('../utils/common')
-const {findone,findall , createifnoneexistent , createorupdaterow , updaterow , incrementrow , createrow }=require('../utils/db')
+const {findone,findall , createifnoneexistent , createorupdaterow , updaterow , incrementrow , createrow
+	, fieldexists
+ }=require('../utils/db')
 const {createifnoneexistent:createifnoneexistent_dbmon , updaterow:updaterow_dbmon }=require('../utils/dbmon')
 const {get_ipfsformatcid_file}=require('../utils/ipfscid')
 const {getusernamefromsession}=require('../utils/session')
@@ -30,8 +32,33 @@ const {MAP_ACTIONTYPE_CODE , MAP_CODE_ACTIONTYPE}=require('../configs/map-action
 const STRINGER=JSON.stringify
 const PARSER=JSON.parse
 const {hashfile}=require('../utils/largefilehash')
-let { queryitemdata_filter }=require('../utils/db-custom')
-router.get( '/item/:id' , (req,res)=>{
+let { queryitemdata , queryitemdata_user }=require('../utils/db-custom')
+
+/** router.get('/:username/:offset/:limit', (req,res)=>{
+	let { username , offset , limit }=req.params
+	offset = +offset
+	limit = +limit
+	if ( ISFINITE(offset) && offset>=0 && ISFINITE(limit) && limit >=1 ){}
+	else {resperr( res, messages.MSG_ARGINVALID ); return }
+	db[']('itembalances', {username} ).then(list=>{
+	}) 
+}) */
+router.get( '/item/:itemid' , (req,res)=>{
+	let {	itemid } = req.params // uuid_or_itemid 
+	let username = getusernamefromsession( req ) 
+
+	if (username){	
+		queryitemdata_user ( itemid , username ).then(resp=>{
+			respok ( res, null , null , {respdata: resp					})
+		})
+	} else {
+		queryitemdata ( itemid ).then(resp=>{
+			respok ( res , null ,null, {respdata : resp } )
+		})		
+	}
+})
+
+router.get( '/item/genericid/:id' , (req,res)=>{
 	let {	id }=req.params // uuid_or_itemid 
 	let jfilter={}
 	if( isuuid( id ) ) {
@@ -39,7 +66,7 @@ router.get( '/item/:id' , (req,res)=>{
 	}	else { // no validate for itemid due to missing validation method , default case
 		jfilter['itemid']= id
 	}
-	queryitemdata_filter ( jfilter ).then(resp=>{
+	queryitemdata_user ( jfilter ).then(resp=>{
 		respok ( res, null , null , {respdata: resp			
 		})
 	})
@@ -47,14 +74,6 @@ router.get( '/item/:id' , (req,res)=>{
 router.get('/searches', (req,res)=>{
 	let {		searchkey
 	}=req.query
-})
-router.get( '/' , (req,res)=>{
-	let {
-		categorystr
-		, orderbykey
-		, orderbyval
-	}=req.query
-			
 })
 
 module.exports = router;

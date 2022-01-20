@@ -1,7 +1,9 @@
 var express = require('express');
 var router = express.Router();
 const { generaterandomhex ,LOGGER , gettimestr , gettimestr_raw , filter_json_by_nonnull_criteria }=require('../utils/common')
-const {findone,findall , createifnoneexistent , createorupdaterow , updaterow , incrementrow , createrow }=require('../utils/db')
+const {findone,findall , createifnoneexistent , createorupdaterow , updaterow , incrementrow , createrow 
+	,	deleterow
+}=require('../utils/db')
 const {createifnoneexistent:createifnoneexistent_dbmon , updaterow:updaterow_dbmon }=require('../utils/dbmon')
 const {get_ipfsformatcid_file}=require('../utils/ipfscid')
 const {getusernamefromsession}=require('../utils/session')
@@ -28,7 +30,29 @@ const {MAP_ACTIONTYPE_CODE , MAP_CODE_ACTIONTYPE}=require('../configs/map-action
 const STRINGER=JSON.stringify
 const PARSER=JSON.parse
 const {hashfile}=require('../utils/largefilehash')
+const {create_uuid_via_namespace }=require('../utils/common')
 /* GET home page. */
+/** desc bundles;
+| name        | varchar(500)   
+| description | varchar(1000)  
+| uuid        | varchar(80)    
+| username    | varchar(80)    
+| active      | tinyint(4)     
+*/
+router.post ('/', (req,res)=>{
+	const username = getusernamefromsession ( req )
+ 	if ( username) {}
+	else { resperr( res , messages.MSG_PLEASELOGIN ); return }
+	let { name,description}=req.body ; LOGGER('' , req.body )
+	let uuid = create_uuid_via_namespace( `${username}_${name}` ) 
+	findone('bundles', { username , name } ).then(resp=>{
+		if ( resp){resperr(res, messages.MSG_DATADUPLICATE) ; return }
+		else {}
+		createrow ( 'bundles' , { username, name }).then(resp=>{
+			respok( res , null,null,{payload:{ uuid } } )
+		})
+	})
+})
 router.get('/', function(req, res, next) {
 	const username = getusernamefromsession ( req )
  	if ( username) {}
@@ -40,37 +64,87 @@ router.get('/', function(req, res, next) {
 	})	
 //  res.render('index', { title: 'Express' });
 })
-
-router.post ('/item/:bundleuuid/:itemid/:increasedecrease' , (req,res)=>{	
+const {move_across_columns }=require('../utils/db-balance' ) 
+router.post ('/item/:bundleuuid/:itemid/:increasedecrease' , async(req,res)=>{	
 	const username = getusernamefromsession ( req )
  	if ( username) {}
 	else { resperr( res , messages.MSG_PLEASELOGIN ); return }
 	let { bundleuuid , itemid , increasedecrease } =req.params
 	let { amount } = req.body
 	let aproms = []
+	let respbalance = await		findone ('itembalances', { username , itemid } )
+	if (respbalance ){}
+	else { resperr( res, messages.MSG_BALANCENOTENOUGH , null,{payload:{reason:'acct-not-found'}} ); return }
+	amount = + amount
+	if ( ISFINITE( amount ) && amount>0 ){}  
+	else { resperr(res, messages.MSG_ARGINVALID) ; return }
+	if(respbalance.avail >= +amount){}
+	else {resperr( res , messages.MSG_BALANCENOTENOUGH , null,{payload:{reason:'balance-not-enough'}}); return }
 	aproms[aproms.length] = findone( 'bundles' , {uuid : bundleuuid })
 	aproms[aproms.length] =	findone( 'items' , { itemid } )
-	Promise.all ( aproms ).then(resp =>{ 
+	Promise.all ( aproms ).then(async resp =>{ 
 		if (resp[ 0 ] && resp[ 1 ] ){}
 		else { resperr(res , messages.MSG_DATANOTFOUND); return		}
 
 		if ( increasedecrease == 'increase' )	{
+			let respmove = await move_across_columns (username,itemid , 'avail' ,'locked' ,  amount)
+			if ( respmove){}
+			else { resperr( res , messages.MSG_BALANCENOTENOUGH ) ; return }
+			let uuid=uuidv4()
 	    incrementroworcreate({ table:'bundlehasitems'
-			, jfilter:{ bundleuuid , itemid }
-			, fieldname:'countfavors'
-			, incvalue: amount 
+				, jfilter:{ bundleuuid , itemid }
+				, fieldname:'countfavors'
+				, incvalue: amount
+								 
 			})
 			createrow ( 'logactions' , {
 				username
 				, itemid
 				, bundleuuid
 				, typestr : 'PUT-ITEM-TO-BUNDLE'
+				, uuid
 			})
+			respok ( res , null, null , {payload : { uuid }} ) 
 		}
 		else if ( increasedecrease == 'decrease' ){ // need to decrease or delete row entirely
-			
+//			let respmove = await move_across_columns ( username , itemid , 'locked' , 'avail' , amount ) 
+	//		if ( respmove) {}
+		//	else { resperr( res , messages.MSG_BALANCENOTENOUGH) ; return }
+			let uuid=uuidv4()
+			let respbundleitem = await findone( 'bundlehasitems' , {bundleuuid , itemid } )
+			if ( respbundleitem ) {}
+			else {resperr( res, messages.MSG_DATANOTFOUND) ; return }
+			let amountinbundle = 	respbundleitem.amount
+			if ( amountinbundle  >= amount ){}
+			else { resperr( res, messags.MSG_BALANCENOTENOUGH ) ; return }
+
+			let respmove = await move_across_columns ( username , itemid , 'locked' , 'avail' , amount ) 
+			if ( respmove) {}
+			else { resperr( res , messages.MSG_BALANCENOTENOUGH) ; return }
+			createrow ( 'logactions' , {
+				username
+				, itemid
+				, bundleuuid
+				, typestr : 'REMOVE-ITEM-FROM-BUNDLE'
+				, uuid
+			})
+			respok ( res , null, null , {payload : { uuid }} ) 
+								
+			let delta=amountinbundle - amount
+			switch ( Math.sign ){
+				case +1 :
+					incrementrow ( { table : 'bundlehasitems' 
+						, jfilter : {bundleuuid , itemid } 
+						, fieldname : 'amount' 
+						, incvalue : - amount } 
+					) 
+				break 
+				case 0 : deleterow ( 'bundlehasitems' , {
+					bundleuuid , itemid
+				}) 
+				break 
+			}
 		}
-		respok ( res )	
 	})
 })
 /**desc bundles;

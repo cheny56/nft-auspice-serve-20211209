@@ -11,15 +11,15 @@ const tableexists=async tablename=>{
 	return resp[0][0]
 }
 const fieldexists=async (tablename,fieldname)=>{
-	let resp=await db.sequelize.query (`SHOW COLUMNS FROM '${tablename}' LIKE '${fieldname}'`)
-	return resp[0][0]
+  let resp=await db.sequelize.query (`SHOW COLUMNS FROM ${tablename} LIKE '${fieldname}'`)
+  return resp[0][0]
 }
 const createrow=async(table,jdata)=>{return await db[table].create(jdata)}
 const countrows_scalar = (table,jfilter)=>{
   return new Promise ((resolve,reject)=>{
     db[table].count({where:{... jfilter} } ).then(resp=>{
-      if(resp)  {resolve( respdata   )}
-      else      {resolve( )    }
+      if(resp)  {resolve( resp   )}
+      else      {resolve( 0 )    }
     })
   })
 } //
@@ -62,11 +62,18 @@ const createifnoneexistent=async(table,jfilter,jupdates)=>{
 	if(resp){return null}
 	return await createrow(table,{...jfilter, ... jupdates})
 }
+const deleterow=async (tablename,jfilter)=>{
+	return await db[tablename].destroy( jfilter)
+}
 module.exports={findone,findall,updatetable, updaterow 
 	, tableexists
+	, fieldexists
 	, createrow,createorupdaterow , updateorcreaterow , incrementroworcreate 
-  ,countrows , createifnoneexistent
+  , countrows 
+  , countrows_scalar 
+	, createifnoneexistent
 	, incrementrow
+	, deleterow
 }
 
 const test=_=>{

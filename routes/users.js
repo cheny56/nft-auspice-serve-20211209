@@ -2,7 +2,8 @@
 var express = require('express');
 var router = express.Router();
 const {findone,findall,createrow , updaterow
-, countrows_scalar
+	, countrows_scalar
+	, fieldexists
 }=require('../utils/db')
 const {LOGGER,generaterandomstr , generaterandomstr_charset , gettimestr }=require('../utils/common')
 const {respok,respreqinvalid,resperr , resperrwithstatus } =require('../utils/rest')
@@ -18,6 +19,7 @@ const { createrow : createrow_mon
   , findone : findone_mon
  }=require('../utils/dbmon')
 const TOKENLEN=48
+let { v5 : uuidv5 }=require('uuid')
 /* GET users listing. */
 // router.get('/', function(req, res, next) {  res.send('respond with a resource');});
 const MAP_FIELDS_ALLOWED_TO_CHANGE={email:1
@@ -31,6 +33,43 @@ const MAP_FIELDS_ALLOWED_TO_CHANGE={email:1
 const { MAP_ACTIONTYPE_CODE , MAP_CODE_ACTIONTYPE }=require('../configs/map-actiontypes')
 const { getrandomwords , STRINGER }=require('../utils/common')
 
+router.get('/query-value-exists/:fieldname/:value' , (req,res)=>{
+	let { fieldname , value } = req.params
+	fieldexists('users' , fieldname).then(resp=>{
+		if(resp){}
+		else {resperr(res,messages.MSG_ARGINVALID); return }
+		let jfilter={}
+		jfilter[ fieldname ] =value
+		findone('users' , jfilter).then(resp=>{
+			if(resp){respok(res, null ,null , { payload : {exists : 1}} )}
+			else		{respok(res , null,null, { payload : {exists : 0}})}
+		})
+	})
+})
+router.post ('/join' , async(req,res)=>{
+	let { profileimage
+		, username
+		, address
+		, email
+		, agreepromoinfo
+	}=req.body
+	if (username && email ){}
+	else {resperr(res, messages.MSG_ARGMISSING); return }
+	let aproms=[]
+	aproms[aproms.length ] = findone('users', { address })
+	aproms[aproms.length ] = findone('users' ,{ username })
+	Promise.all(aproms).then(async resp=>{
+		if( resp[ 0 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {payload : {dupfield: 'address'} }); return
+		} else {}
+		if( resp[ 1 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {payload : {dupfield: 'username'} }); return
+		} else {}
+		let uuid = uuidv5( uuid , NAMESPACE_FOR_HASH )
+		createrow_mon ('users' , {... req.body , uuid } )
+		delete req.body.profileimage
+		let resp_create = await createrow ('users' , {... req.body , uuid } )
+		respok ( res , null , null , { payload : { uuid }} )
+	})
+}) 
 router.get('/email/verifycode/:emailaddress',(req,res)=>{
   const {emailaddress}=req.params
   if(validateemail(emailaddress)){} else {resperr(res,messages.MSG_ARGINVALID );return}
@@ -140,7 +179,5 @@ router.post('/logout',(req,res)=>{  LOGGER('/logout' ,req.headers.token )
     }).catch(err=>{LOGGER('sHw1wZpAZ4',err);resperr(res) })
   }).catch(err=>{LOGGER('Cf9NiZEEY7',err);resperr(res) })
 })
-
-
 
 module.exports = router;

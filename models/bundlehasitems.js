@@ -25,6 +25,18 @@ module.exports = function(sequelize, DataTypes) {
     itemid: {
       type: DataTypes.STRING(100),
       allowNull: true
+    },
+    bundleuuid: {
+      type: DataTypes.STRING(80),
+      allowNull: true
+    },
+    amount: {
+      type: DataTypes.BIGINT,
+      allowNull: true
+    },
+    uuid: {
+      type: DataTypes.STRING(50),
+      allowNull: true
     }
   }, {
     sequelize,

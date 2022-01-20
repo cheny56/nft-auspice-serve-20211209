@@ -38,19 +38,19 @@ router.get('/totalcount/:objectid',(req,res)=>{
 })
 router.post('/toggle/:objectid',(req,res)=>{
 	const username=getusernamefromsession(req)
-	if(username){} else {resperrwithstatus(res,403,messages.MSG_PLEASELOGIN);return}
-	let {objectid}=req.params
-	findone('logfavorites',{username:username,object:objectid}).then(resp=>{
+	if(username){} else {resperr(res,messages.MSG_PLEASELOGIN , );return}
+	let {objectid}=req.params ; let itemid = objectid
+	findone('logfavorites',{username , objectid}).then(resp=>{
 		if(resp){
 			const status01=1^resp.status,incvalue=resp.status?-1:+1 // , status00=resp.status
-			updaterow('logfavorites', {username:username , object:objectid},{status:status01})
+			updaterow('logfavorites', {username:username , objectid},{status:status01})
 			respok(res,null,null,{respdata:status01 })
-			incrementroworcreate({table:'favorites',jfilter:{object:objectid},fieldname:'countfavors',incvalue: incvalue })
+			incrementroworcreate({table:'favorites',jfilter:{objectid},fieldname:'countfavors',incvalue: incvalue })
 			incrementrow({table:'items' , jfilter:{itemid:objectid  } , fieldname:'countfavors',incvalue: incvalue	})	
 		} else {			
-			createrow('logfavorites',{object:objectid , username:username,status:1})
+			createrow('logfavorites',{objectid , itemid , username:username,status:1})
 			respok(res,null,null,{respdata:1})
-			incrementroworcreate({table:'favorites',jfilter:{object:objectid},fieldname:'countfavors',incvalue: +1 })
+			incrementroworcreate({table:'favorites',jfilter:{ objectid},fieldname:'countfavors',incvalue: +1 })
 			incrementrow({table:'items' , jfilter:{itemid:objectid  } , fieldname:'countfavors',incvalue: +1})	
 			;return
 		}

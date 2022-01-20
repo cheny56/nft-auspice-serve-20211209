@@ -1,12 +1,18 @@
 
 const nodemailer = require('nodemailer')
 // const configemail={	user:'cryptobank00@gmail.com'	, pass: 'zmflqxh1!'} // ''ymBEK2nXd6 
-const configemail={	user:'collectorplace37@gmail.com'	, pass: 'Fci^4g5YPgsSb#Y' } // ''ymBEK2nXd6 zmflqxh1!' 9t~Z(M]{&p'
-const {generaterandomstr_charset,generaterandomstr,  gettimestr, LOGGER}=require('../utils/common')
-const STR_SERVICE_NAME='Collector.Place'
+//	const configemail={	user:'collectorplace37@gmail.com'	, pass: 'Fci^4g5YPgsSb#Y' } // ''ymBEK2nXd6 zmflqxh1!' 9t~Z(M]{&p'
+// const configemail={	user:'itemverse1@gmail.com'	, pass: 'y7ebZegtdc' } // ''ymBEK2nXd6 zmflqxh1!' 9t~Z(M]{&p'
+
+const configemail={ user:'fancynet161@gmail.com'  , pass: 'JPfiqS43!ht-C_Y' } // ''ymBEK2nXd6 zmflqxh1!' 9t~Z(M]{&p'
+
+const { generaterandomstr_charset
+	, generaterandomstr
+	, gettimestr, LOGGER}=require('../utils/common')
+const STR_SERVICE_NAME='Itemverse'
 const cliredisa=require('async-redis').createClient()
 const KEYNAME_EMAILCODE='EMAILCODE' // require('../configs/configs')
-const {findall , findone, updateorcreaterow }=require('../utils/db')
+const {findall , findone, updateorcreaterow , createrow }=require('../utils/db')
 const {messages} = require('../configs/messages')
 const {TIMESTRFORMAT}=require('../configs/configs')
 const moment=require('moment')
@@ -16,8 +22,11 @@ let transporter=nodemailer.createTransport({  service: 'gmail'  , auth: {		user:
 })
 const CODELEN=6 // const toemailaddress='??@gmail.com'
 /*** */
-const sendemail_customcontents_withtimecheck=async (toemailaddress,typeusernameorpw)=>{return new Promise(async(resolve,reject)=>{let timenow=moment() // gettimestr()
-  let respverifycode= await findone('tmppw',{emailaddress:toemailaddress}); let maxdelaysend
+const sendemail_customcontents_withtimecheck=async (toemailaddress
+	, typeusernameorpw
+	, jdata
+)=>{return new Promise(async(resolve,reject)=>{let timenow=moment() // gettimestr()
+  let respverifycode= await findone( 'emailverifycode' , { emailaddress:toemailaddress}); let maxdelaysend
   if(respverifycode){ // let respdelayemailsend=await findone('settings',{keys_:'MAX_DELAY_CONSECUTIVE_EMAIL_SEND_IN_SECONDS'}) // MI LI // if(respdelayemailsend){maxdelaysend = +respdelayemailsend.value_} else {maxdelaysend = MAX_DELAY_CONSECUTIVE_EMAIL_SEND_IN_SECONDS }
     let respdelayemailsend=await findone('settings',{key_:'MAX_DELAY_CONSECUTIVE_EMAIL_SEND_IN_MILI'}) ; LOGGER('83TZG0d7i7',respdelayemailsend)// MI LI 
     if( respdelayemailsend){maxdelaysend = +respdelayemailsend.value_}
@@ -31,6 +40,7 @@ const sendemail_customcontents_withtimecheck=async (toemailaddress,typeusernameo
 	const respuser=await findone('users',{email:toemailaddress})
 	if(respuser){} else {LOGGER('faVzCfDhqM@user-not-found');resolve(null);return}
 	const {username}=respuser
+	let code = generaterandomstr_charset( 10 , 'base58' ) 
 	switch(typeusernameorpw){
 		case 'username' : 
 			mailoptions={    from: configemail.user    
@@ -46,15 +56,33 @@ const sendemail_customcontents_withtimecheck=async (toemailaddress,typeusernameo
 				, text: `임시 비밀번호는 ${tmppw} 입니다` // 내용// '' // toemailaddress
 			}
 		break
+		case 'emailverifylink' :
+			let { cryptoaddress} = jdata 
+			mailoptions = { from : configemail.user
+				, to : toemailaddress 
+				, subject : `이메일 인증` 
+//				, text : `이메일인증링크: http://users.itemverse1.net/#/bind_address_email/${cryptoaddress}/${toemailaddress}/${code}` 
+//				, text : `이메일인증링크: http://localhost:3000/#/bind_address_email/${cryptoaddress}/${toemailaddress}/${code}` 
+				, text : `이메일인증링크: http://localhost:3000/#/verifyemail?address=${cryptoaddress}&email=${toemailaddress}&verifycode=${code}` 
+			}
+		break
 	}
   transporter.sendMail( mailoptions , (error, info)=>{
     if (error) {	console.log(error);resolve({status:0,reason:messages.MSG_UNKNOWN_ERR });return false  }
 		else {console.log(info)
-			if(typeusernameorpw=='pw'){
+/**			if(typeusernameorpw=='pw'){
 				cliredisa.hset( 'TMPPW' , toemailaddress,tmppw )
 				updateorcreaterow('tmppw' , {emailaddress:toemailaddress , code:tmppw} , {lastupdate:timenow.format(TIMESTRFORMAT)} )	
+      	console.log('OK');resolve({status:1,reason:messages.MSG_OK })
 			}
-      console.log('OK');resolve({status:1,reason:messages.MSG_OK })
+			else { */
+				createrow ( 'emailverifycode' , {
+					emailaddress : toemailaddress
+					, lastupdate : gettimestr()
+					, code
+				} )
+      	console.log('OK');resolve({status:1,reason:messages.MSG_OK , code })
+//			}	
       return false 
     }
   })
@@ -73,7 +101,10 @@ const sendemail_withtimecheck=async toemailaddress=>{return new Promise(async(re
   } else {LOGGER('zZk2RR955w')
   }  
   let token=generaterandomstr_charset(CODELEN, 'numbers') // base58
-  const mailoptions={    from: configemail.user    , to:  toemailaddress , subject: `${STR_SERVICE_NAME} 이메일 인증코드: ${token}`    , text: `인증코드: ${token}` // 내용// '' // toemailaddress
+  const mailoptions={    from: configemail.user    
+		, to:  toemailaddress 
+		, subject: `${STR_SERVICE_NAME} 이메일 인증코드: ${token}`    
+		, text: `인증코드: ${token}` // 내용// '' // toemailaddress
   }
   transporter.sendMail( mailoptions , (error, info)=>{
     if (error) {	console.log(error);resolve({status:0,reason:messages.MSG_UNKNOWN_ERR });return false  }

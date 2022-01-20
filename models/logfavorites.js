@@ -29,6 +29,10 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.INTEGER(4),
       allowNull: true,
       comment: '0: i do not like, 1: i do like'
+    },
+    objectid: {
+      type: DataTypes.STRING(100),
+      allowNull: true
     }
   }, {
     sequelize,

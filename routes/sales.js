@@ -97,7 +97,101 @@ router.post('/sale/bundle/:uuid' , async(req,res)=>{
 | uuid        | varchar(80)      | YES  |     | NULL                |                               |
 | username    | varch
 */
-router.post('/sale/single-kind' , async(req,res)=>{ //
+const MAP_SUPERTYPESTR ={
+	BUY:2
+, buy : 2
+, SELL : 1
+, sell : 1
+}
+router.post('/sale/single-kind/signature/:itemid' , async(req,res)=>{
+	const username = getusernamefromsession ( req )
+ 	if ( username) {}
+	else { resperr( res , messages.MSG_PLEASELOGIN ); return } ; LOGGER('' , req.body)
+	let { itemid } =req.params
+	let { // itemid		, 
+		type
+		, typestr
+		, amount
+		, expiry
+		, expirystr
+		, price
+		, priceunit
+		, rawdata_to_sign
+     , sig_r
+     , sig_s
+     , sig_v
+     , signature
+     , datahash
+		, supertypestr
+	}=req.body
+	if ( itemid && itemid.length ) {}
+	else {	resperr(res, messages.MSG_ARGMISSING );return }
+	amount = + amount
+	if ( ISFINITE(amount) && amount>0 ){}
+	else {resperr(res,messages.MSG_ARGINVALID) ; return }
+//	let respbalance = await findone( 'itembalances' , {itemid , username } )
+	//if ( respbalance && respbalance.amount >= amount){}
+//	else {resperr( res, messages.MSG_BALANCE_NOT_ENOUGH ); return }
+	let uuid = uuidv4()
+	let respitem = await findone ('items' , { itemid } ) 
+	if ( respitem ){}
+	else {resperr( res, messages.MSG_DATANOTFOUND ); return }
+	createrow ( 'sales' , {
+			username
+		, seller : username
+		,	itemid
+		, amount
+		, author : respitem.author
+		, authorfee : respitem.authorfee
+		, uuid
+		, type
+		, typestr
+	}).then(resp=>{
+		respok (res
+			, null
+			, null
+			, { payload : {
+				uuid
+			}}
+		)
+		createrow ( 'orders' , {
+			username
+			, uuid
+			, makerortaker : 1
+			, sig_r
+			, sig_s
+			, sig_v
+			, signature
+			, datahash
+			, itemid
+			, rawdata_to_sign : typeof rawdata_to_sign=='string'? rawdata_to_sign : STRINGER(rawdata_to_sign) 
+		, type
+		, typestr
+		, type
+		, typestr
+		, supertypestr
+		, supertype : MAP_SUPERTYPESTR [ supertypestr]
+		})
+	})
+})
+/**	orders ;
+| matcher_contract     | varchar(80)         | YES  |     | NULL                |                               |
+| username             | varchar(80)         | YES  |     | NULL                |                               |
+| asset_contract_offer | varchar(80)         | YES  |     | NULL                |                               |
+| asset_id_offer       | bigint(20)          | YES  |     | NULL                |                               |
+| asset_amount_offer   | varchar(20)         | YES  |     | NULL                |                               |
+| asset_contract_ask   | varchar(80)         | YES  |     | NULL                |                               |
+| asset_id_ask         | bigint(20)          | YES  |     | NULL                |                               |
+| asset_amount_ask     | varchar(20)         | YES  |     | NULL                |                               |
+| makerortaker         | tinyint(4)          | YES  |     | NULL                |                               |
+| uuid                 | varchar(80)         | YES  |     | NULL                |                               |
+| sig_r                | varchar(60)         | YES  |     | NULL                |                               |
+| sig_s                | varchar(60)         | YES  |     | NULL                |                               |
+| sig_v                | varchar(10)         | YES  |     | NULL                |                               |
+| signature            | varchar(100)        | YES  |     | NULL                |                               |
++----------------------+---------------------+------+-----+---------------------+----------------
+*/
+router.post('/sale/single-kind/no-sig' , async(req,res)=>{ //
 	const username = getusernamefromsession ( req )
  	if ( username) {}
 	else { resperr( res , messages.MSG_PLEASELOGIN ); return }

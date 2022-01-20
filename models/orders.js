@@ -57,6 +57,52 @@ module.exports = function(sequelize, DataTypes) {
     uuid: {
       type: DataTypes.STRING(80),
       allowNull: true
+    },
+    sig_r: {
+      type: DataTypes.STRING(60),
+      allowNull: true
+    },
+    sig_s: {
+      type: DataTypes.STRING(60),
+      allowNull: true
+    },
+    sig_v: {
+      type: DataTypes.STRING(10),
+      allowNull: true
+    },
+    signature: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    datahash: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    itemid: {
+      type: DataTypes.STRING(100),
+      allowNull: true
+    },
+    type: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true
+    },
+    typestr: {
+      type: DataTypes.STRING(40),
+      allowNull: true
+    },
+    rawdata_to_sign: {
+      type: DataTypes.STRING(3000),
+      allowNull: true
+    },
+    supertype: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      comment: '1: sell, 2:buy'
+    },
+    supertypestr: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+      comment: '1: sell, 2:buy'
     }
   }, {
     sequelize,
