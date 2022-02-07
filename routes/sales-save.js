@@ -5,8 +5,6 @@ const { generaterandomhex ,LOGGER , gettimestr , gettimestr_raw
 	, filter_json_by_nonnull_criteria }=require('../utils/common')
 const {findone,findall , createifnoneexistent , createorupdaterow , updaterow , incrementrow , createrow 
 	, countrows_scalar
-	, logical_op
-	, update_min_or_max 
 }=require('../utils/db')
 const {createifnoneexistent:createifnoneexistent_dbmon , updaterow:updaterow_dbmon }=require('../utils/dbmon')
 const {get_ipfsformatcid_file}=require('../utils/ipfscid')
@@ -15,9 +13,7 @@ const dbmon=require('../modelsmongo')
 const fs=require('fs')
 const {messages}=require('../configs/messages')
 const {respok,resperr,respreqinvalid  ,resperrwithstatus  }=require('../utils/rest')
-const {CDN_PATH , PRICEUNIT_DEF , NAMESPACE_FOR_HASH , TIMESTRFORMAT
-	, MAP_SALESTATUS_STR 
- }=require('../configs/configs')
+const {CDN_PATH , PRICEUNIT_DEF , NAMESPACE_FOR_HASH }=require('../configs/configs')
 const {generateitemid}=require('../utils/items')
 const shell = require('shelljs')
 const db=require('../models')
@@ -39,9 +35,6 @@ const {hashfile}=require('../utils/largefilehash')
 const { v4: uuidv4 } = require('uuid')
 const { sha256, } =require('js-sha256')
 const { v5: uuidv5 } = require('uuid')
-const moment=require('moment')
-const { NETTYPE } =require('../configs/net')
-
 // bigint <=2^64-1 == 1.84467441e19
 // unix 1894047165 == 2030-01-08...
 const MAP_SALE_TYPESTR={
@@ -50,153 +43,9 @@ const MAP_SALE_TYPESTR={
 	, DUTCH : 3
 	, BUNDLE : 4
 }
-///////////////////
-const MAP_SELL_TYPESTR={
-	COMMON: 1
-	, 'AUCTION_ENGLISH' : 2
-	, 'AUCTION_DUTCH' : 3
-}
-const MIN_DURATION_TO_EXPIRY_UNIX=24*3600
-const validate_order=jreqbody=>{
-	let { expiry , startingtime}=jreqbody
-	if ( expiry ) {
-		if ( moment.unix(+expiry) - moment.unix(startingtime) >= MIN_DURATION_TO_EXPIRY_UNIX ){}
-		else {return {status : false, reason:'expiry'} }
-	}
-	else {}
-	return {status : true}
-}
-router.post('/maker/seller',async (req, res, next) => { // 
-	LOGGER('' , req.body)
-	const username=getusernamefromsession( req )
-  if(username) {} 
-	else {resperr(res , messages.MSG_PLEASELOGIN  , 403);return}
-	let { itemid 
-		, amount 
-		, buyorsell
-		, tokenid
-		, price
-		, priceunit
-		, startingtime
-		, expiry
-		, typestr
-	 }=req.body //	respok ( res ); return
-	amount = + amount
-	if ( itemid && amount ){}
-	else {resperr( res, messages.MSG_ARGMISSING, ); return } 
-	if ( MAP_SELL_TYPESTR[ typestr ] ) {}
-	else {resperr(res , messages.MSG_ARGINVALID, null, {payload: {reason: 'typestr'}}) ; return }
-
-	let respvalidate= validate_order(req.body)
-	if ( respvalidate.status  ){}
-	else {resperr(res,messages.MSG_ARGINVALID ,null, {payload: {reason : respvalidate.reason }} ) ; return }
-	switch( typestr ){
-		case 'COMMON' :  
-		break
-		case 'AUCTION_ENGLISH' : 
-		break
-		case 'AUCTION_DUTCH' :
-		break 
-	}
-  findone( 'itembalances' , { 
-		username 
-		, itemid }).then(async resp => {
-		if(resp){}
-		else {resperr(res, messages.MSG_BALANCE_NOT_ENOUGH , 40320 );  return }
-		let {avail}=resp
-		avail = + avail
-		let uuid = uuidv4()
-		if( ISFINITE( avail ) ){
-			if( avail >= amount ){}
-			else {resperr(res, messages.MSG_BALANCE_NOT_ENOUGH , 79175 );return }
-//			let uuid = uuidv4()
-			createrow( 'orders' , {
-				... req.body
-				, username
-//				, asset_contract_offer : ADDRESSES.matcher
-				, asset_id_bid       : tokenid // ''
-				, asset_amount_bid : amount
-				, asset_amount_ask : price 
-				, makerortaker : 0 //  'maker'
-				, uuid
-				, supertype : 1
-				, supertypestr : 'SELL'
-				, expiry
-				, expirychar : moment.unix ( expiry).format( TIMESTRFORMAT )
-				, typestr
-				, price
-			}).then(async respcreate =>{
-				respok(res , null , null , {payload : {
-					uuid
-				}})
-				updaterow ('itembalances' , { // db['itembalances'].
-					username , itemid
-				} , {
-					avail : resp.avail - amount
-				, locked : resp.locked + amount
-				} )	// table,jfilter,fieldname,incvalue				// table,jfilter,jupdates
-				createrow ( 'logactions' , {
-					username
-					, typestr : ''
-					, itemid
-					, tokenid
-					, amount
-					, nettype : NETTYPE
-					, uuid
-					, status : 1 
-				} )
-				switch( typestr ){
-					case 'COMMON' : 
-					break
-					case 'AUCTION_ENGLISH' :  
-					break
-					case 'AUCTION_DUTCH' :
-					break 
-				}
-			})
-			await logical_op( 'items' , {itemid} , 'salestatus' , MAP_SALESTATUS_STR[typestr] , 'or' )
-		await update_min_or_max ( 'items' , {itemid} , 'pricemin' , price , 0 ) // oper_min_or_max 
-		await update_min_or_max ( 'items' , {itemid} , 'pricemax' , price , 1 ) 
-		await createrow ( 'itemhistory' , {
-			itemid
-			, from_ : username
-			, to_: username
-			, price
-			, priceunit
-			, typestr
-			, tokenid : (tokenid ? tokenid: null)
-//			, txtype : 
-			, isonchain : 0
-			, nettype : NETTYPE
-			, uuid
-//			, txhash 	
-		})
-	
-		} else {
-			resperr(res, messages.MSG_DATA_NOT_FOUND);return
-		}
+router.post ('/',(req,res)=>{
 		
-	})
 })
-/**	 desc itemhistory;
-| itemid         | varchar(100)     | YES  |     | NULL                |                               |
-| iteminstanceid | int(10) unsigned | YES  |     | NULL                |                               |
-| from_          | varchar(80)      | YES  |     | NULL                |                               |
-| to_            | varchar(80)      | YES  |     | NULL                |                               |
-| price          | varchar(20)      | YES  |     | NULL                |                               |
-| priceunit      | varchar(20)      | YES  |     | NULL                |                               |
-| typestr        | varchar(20)      | YES  |     | NULL                |                               |
-| type           | tinyint(4)       | YES  |     | NULL                |                               |
-| datahash       | varchar(100)     | YES  |     | NULL                |                               |
-| tokenid        | varchar(20)      | YES  |     | NULL                |                               |
-| txtype         | tinyint(4)       | YES  |     | NULL                |                               |
-| isonchain      | tinyint(4)       | YES  |     | NULL                |                               |
-| nettype        | varchar(20)      | YES  |     | NULL                |                               |
-| uuid           | varchar(50)      | YES  |     | NULL                |                               |
-| status         | tinyint(4)       | YES  |     | NULL                |                               |
-| txhash         | varchar(80)      | YES 
-*/
-///////////////////
 router.get('/',(req,res)=>{
 	findall ( 'sales' ,{}).then(list =>{
 		let count = countrows_scalar ( 'sales' , {} )

@@ -3,7 +3,34 @@ const moment=require('moment')
 const KEYS=Object.keys
 const ISFINITE=Number.isFinite
 const { v4 : uuidv4 , v5 : uuidv5 }=require('uuid')
+const mnemonicwords =require('mnemonic-words')
+const getrandomint=(min, max)=> {
+	return Math.random() * (max - min) + min;
+}
+const convaj=(arr,keyname,valuename)=>{
+  let jdata={}
+  arr.forEach(elem=>{
+    jdata[elem[keyname]] = elem[valuename]
+  })
+  return jdata
+}
+const getRandomElementsFromArray =(arr, n)=> {
+  var result = new Array(n),
+      len = arr.length,
+      taken = new Array(len);
+  if (n > len)
+      {throw new RangeError("getRandom: more elements taken than available")}
+  while (n--) {
+      var x = Math.floor(Math.random() * len);
+      result[n] = arr[x in taken ? taken[x] : x];
+      taken[x] = --len in taken ? taken[len] : len;
+  }
+  return result;
+}
 
+const getrandomwords=N=>{
+  return getRandomElementsFromArray(mnemonicwords , N)
+}
 const separatebycommas=strcsv=>strcsv.split(/,/).filter(elem=> elem && elem.length )
 const create_uuid_via_namespace = str=> uuidv5 ( str , Array.from ( Array(16).keys() ) )
 // /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -77,7 +104,12 @@ const generaterandomstr_charset=(length,charsetcode)=>{let characters
 }
 
 // => 594ae48dcdc55777fdc05ceea4b40c45ec5118946a12797228dd8106e8f1e5fb
-module.exports={generaterandomhex, LOGGER:console.log , cyrb53 , hash53:cyrb53 , hashFnv32a,gettimestr
+module.exports={
+	convaj
+	,	generaterandomhex, 
+	getrandomwords ,
+	getrandomint ,
+	LOGGER:console.log , cyrb53 , hash53:cyrb53 , hashFnv32a,gettimestr
 	, create_uuid_via_namespace 
 	, isuuid 
 	, gettimestr_raw 

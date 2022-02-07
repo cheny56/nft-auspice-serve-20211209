@@ -4,6 +4,8 @@ const MAP_ITEMTXTYPES={
   , SELL:1
   , BUY: 2
   , PUTBID : 3
+
+	, BID_TO_AUCTION : 3
   , CANCEL_BID : 4
 
   , CHANGE_OWNERSHIP:3+2
@@ -19,6 +21,7 @@ const MAP_ITEMTXTYPES={
   , DENY_BID : 10
 
   , MINT_SELL : 11
+	, 		REGISTER_ITEM : 12
 }
 module.exports={
   MAP_ITEMTXTYPES

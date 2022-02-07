@@ -19,6 +19,8 @@ const {getuseragent , getipaddress}=require('../utils/session') // const {sendem
 const {validateemail}=require('../utils/validates')
 const db=require('../models') // const dbmon=require('../modelsmongo')
 const {getusernamefromsession}=require('../utils/session') // const { createrow:createrow_mon , updaterow : updaterow_mon }=require('../utils/dbmon')
+const { queryitemdata , queryitemdata_user }=require('../utils/db-custom')
+const { queryuserdata }=require('../utils/db-custom-user' ) 
 const TOKENLEN=48
 let { Op}=db.Sequelize
 let nettype='ETH-TESTNET'
@@ -37,9 +39,14 @@ const expand_fieldval_matches=( fieldname , arrfieldvalues ) =>{
 	let arr_field_matches =	arrfieldvalues.map ( elem => { let jdata={} ; jdata[fieldname] = { [Op.like] : elem }; return jdata } )
 	return { [ Op.or] : arr_field_matches }
 }
+const MAP_TABLE_INVOKE_ITEMQUERY={
+	items : 1
+	, itembalances : 1
+}
 router.get('/rows/fieldvalues/:tablename/:offset/:limit/:orderkey/:orderval' , async (req,res)=>{ // :fieldname/:fieldval/
-	let { tablename ,  offset , limit , orderkey , orderval}=req.params
-	let {fieldname , fieldvalues} = req.query
+	let { tablename , offset , limit , orderkey , orderval}=req.params
+	let {fieldname , fieldvalues , itemdetail } = req.query
+	const username=getusernamefromsession( req ) 
 	fieldexists(tablename, fieldname ).then(async resp=>{
 		if(resp){}
 		else {resperr( res, messages.MSG_DATANOTFOUND); return }
@@ -70,14 +77,36 @@ router.get('/rows/fieldvalues/:tablename/:offset/:limit/:orderkey/:orderval' , a
 			, offset
 			, limit
 			,	order : [[ orderkey , orderval ]]
-		}).then( list =>{
-			respok ( res ,null, null , {list } )
-		})		
+		}).then( list_00 =>{
+//		if (tablename=='items'){
+		if ( MAP_TABLE_INVOKE_ITEMQUERY [tablename] || itemdetail ){
+			let aproms=[]
+			if (username){
+				list_00.forEach ( elem=>{
+					aproms[aproms.length] = queryitemdata_user ( elem.itemid , username )
+				})
+			} else {
+				list_00.forEach ( elem=>{
+					aproms[aproms.length] = queryitemdata( elem.itemid )
+				})
+			}
+			Promise.all ( aproms).then(list=>{
+//				list= list.map ( (elem,idx ) => {return {... elem, ... list_00[idx] }} ) 
+//				list= list.map ( (elem,idx ) => {return {... list_00[idx] , payload : list_00[idx] , ... elem , }} ) 
+				list= list.map ( (elem,idx ) => {return {... list_00[idx] , ... elem , }} ) 
+				respok ( res ,null, null , {list } )
+			})
+		} else {
+			respok ( res ,null,null , { list : list_00 } )
+		}
+		})
 	})
 })
 
 router.get('/rows/:tablename/:fieldname/:fieldval/:offset/:limit/:orderkey/:orderval' , async (req,res)=>{
 	let { tablename , fieldname , fieldval , offset , limit , orderkey , orderval}=req.params
+	let { itemdetail, userdetail , filterkey , filterval }=req.query
+	const username=getusernamefromsession( req ) 
 	fieldexists(tablename, fieldname ).then(async resp=>{
 		if(resp){}
 		else {resperr( res, messages.MSG_DATANOTFOUND); return }
@@ -92,13 +121,51 @@ router.get('/rows/:tablename/:fieldname/:fieldval/:offset/:limit/:orderkey/:orde
 		else {resperr( res, messages.MSG_ARGINVALID, null , {payload : {reason : 'orderkey-invalid'}}); return }
 		let jfilter={}
 		jfilter[ fieldname ]	=fieldval
+		if ( filterkey && filterval ){
+			let respfieldexists = await fieldexists (tablename , filterkey )
+			if ( respfieldexists){}
+			else {resperr( res, messages.MSG_DATANOTFOUND); return }
+			jfilter[ filterkey ]=filterval
+		}
+		else {}
 		db[tablename].findAll ({raw:true
 			, where : {... jfilter} 
 			, offset
 			, limit
 			,	order : [[ orderkey , orderval ]]
-		}).then( list =>{
-			respok ( res ,null, null , {list } )
+		}).then( list_00 =>{
+//		if (tablename=='items'){
+		if ( MAP_TABLE_INVOKE_ITEMQUERY [tablename] || itemdetail ){
+			let aproms=[]
+			if ( username) {
+				list_00.forEach ( elem=>{
+					aproms[aproms.length] = queryitemdata_user ( elem.itemid , username )
+				})
+			} else {
+				list_00.forEach ( elem=>{
+					aproms[aproms.length] = queryitemdata ( elem.itemid )
+				})
+			}
+			Promise.all ( aproms).then(list=>{
+//				list= list.map ( (elem,idx ) => {return {... elem, ... list_00[idx] }} ) 
+//				list= list.map ( (elem,idx ) => {return {... elem , payload : elem, ... list_00[idx] }} ) 
+				list= list.map ( (elem,idx ) => {return { ... list_00[idx] , ... elem ,}} ) 
+				respok ( res ,null, null , {list } )
+			})
+		} 
+		else if ( userdetail ){
+			let aproms=[]
+			list_00.forEach ( elem=>{
+				aproms[aproms.length] = queryuserdata ( elem.username )
+			})
+			Promise.all ( aproms).then(list =>{
+				list =list.map( (elem,idx)=> { return { ... elem, ... list_00[idx] }} )
+				respok ( res, null ,null, { list } )
+			})
+		}
+		else {
+			respok ( res ,null,null , { list : list_00 } )
+		}
 		})		
 	})
 })

@@ -132,6 +132,10 @@ module.exports = function(sequelize, DataTypes) {
     contract: {
       type: DataTypes.STRING(60),
       allowNull: true
+    },
+    status: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true
     }
   }, {
     sequelize,

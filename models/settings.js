@@ -28,6 +28,11 @@ module.exports = function(sequelize, DataTypes) {
     subkey_: {
       type: DataTypes.STRING(100),
       allowNull: true
+    },
+    active: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 1
     }
   }, {
     sequelize,

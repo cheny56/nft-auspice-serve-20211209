@@ -3,6 +3,64 @@ const db=require('../models')
 const {LOGGER}=require('./common')
 const findone=async(table,jfilter)=>          { return await db[table].findOne({raw:true,where:jfilter})}
 const findall=async(table,jfilter)=>          { return await db[table].findAll({raw:true,where:jfilter})}
+
+const update_min_or_max =async(tablename,jfilter, fieldname, val1 , oper_min_or_max )=>{
+	if ( Number.isFinite( +val1) ){}
+	else { return null } 
+	let resp=await findone(tablename , jfilter)
+	if ( resp){}
+	else {return null}
+	let jdata={}
+	jdata[fieldname] = val1
+	if ( resp[fieldname] ){
+		switch ( oper_min_or_max ) {
+			case 0 :
+				if ( +val1 < resp[fieldname] ){ 
+					return updaterow ( tablename , { id : resp.id } , jdata )
+				}
+				else { return null } 
+			break
+			case 1 : 
+				if ( +val1 > resp[fieldname] ){ 
+					return updaterow ( tablename , { id : resp.id } , jdata )
+				}
+				else { return null } 
+			break
+		}
+	} else {
+		return updaterow (tablename, {id : resp.id} ,  jdata)
+	}
+}
+const logical_op=async ( tablename, jfilter, fieldname,fieldval , logicaloper )=>{
+	let resprow = await db[ tablename].findOne( {where: jfilter } )
+	if ( resprow) {
+		let jupdate={}
+		jupdate[ fieldname] =resprow.dataValues[fieldname]
+		if ( logicaloper == 'or')
+		{	jupdate[ fieldname] = jupdate[ fieldname] | fieldval  
+		} else {
+			jupdate[ fieldname] = jupdate[ fieldname] & fieldval
+		}
+		resprow.update ( jupdate )  
+	}
+	else {return null } 
+}
+const togglefield=async (tablename , jfilter , fieldname)=>{
+  let resp =await findone(tablename , {... jfilter} )
+  if(resp){} else {return null}
+  let valuetoupdate = + resp[fieldname] ? 0 : 1
+  let jupdates={} ; jupdates[ fieldname] = valuetoupdate
+  await updaterow(tablename , {id: resp.id} , {... jupdates } )
+  return valuetoupdate
+}
+const findall_select_columns=async(table , jfilter,acols)=>{	
+	if ( acols.constructor === Array){
+		return await db[table].findAll({ raw: true , where : jfilter , attributes : acols })
+	}
+	else { 
+		return await db[table].findAll({ raw: true , where : jfilter })
+	}
+}
 const updatetable=async(table,jfilter,jupdates)=>  { return await db[table].update(jupdates,{where:jfilter})}
 const updaterow=updatetable
 
@@ -63,9 +121,27 @@ const createifnoneexistent=async(table,jfilter,jupdates)=>{
 	return await createrow(table,{...jfilter, ... jupdates})
 }
 const deleterow=async (tablename,jfilter)=>{
-	return await db[tablename].destroy( jfilter)
+	return await db[tablename].destroy( {where : jfilter} )
 }
-module.exports={findone,findall,updatetable, updaterow 
+const moverow=async(fromtable, jfilter, totable , auxdata)=>{
+	findone( fromtable, jfilter).then(async resp=>{
+		if(resp){
+			let {id} = resp
+			delete resp['createdat']
+			delete resp['updatedat']
+			delete resp['id']
+			await createrow(totable , {... resp , ... auxdata } )
+//			deleterow (fromtable ,{id: resp.id} )
+			return await db.sequelize.query(`delete from ${fromtable} where id=${id}` )
+		}
+		else{
+		}
+	})
+}
+module.exports={findone,findall,
+	findall_select_columns
+	, togglefield 
+	, updatetable, updaterow 
 	, tableexists
 	, fieldexists
 	, createrow,createorupdaterow , updateorcreaterow , incrementroworcreate 
@@ -74,6 +150,9 @@ module.exports={findone,findall,updatetable, updaterow
 	, createifnoneexistent
 	, incrementrow
 	, deleterow
+	, moverow
+	, logical_op
+	, update_min_or_max 
 }
 
 const test=_=>{

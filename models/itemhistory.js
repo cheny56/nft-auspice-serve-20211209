@@ -77,6 +77,10 @@ module.exports = function(sequelize, DataTypes) {
     status: {
       type: DataTypes.INTEGER(4),
       allowNull: true
+    },
+    txhash: {
+      type: DataTypes.STRING(80),
+      allowNull: true
     }
   }, {
     sequelize,

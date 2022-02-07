@@ -3,15 +3,394 @@ var router = express.Router();
 const {getusernamefromsession}=require('../utils/session')
 const {gettxandwritetodb}=require('../services/query-eth-chain')
 const {messages}=require('../configs/messages')
-const {createifnoneexistent}=require('../utils/db')
-const { create_uuid_via_namespace }=require('../utils/common')
+const {createifnoneexistent
+	, createrow 
+	, updaterow 
+	, moverow
+	, logical_op
+	, findone
+	, findall
+	, incrementrow
+}=require('../utils/db')
+const { create_uuid_via_namespace , uuidv4 }=require('../utils/common')
+const { TIMESTRFORMAT
+	, PRICEUNIT_DEF
+	, MAP_SALESTATUS_STR
+}=require('../configs/configs')
+const { NETTYPE }=require('../configs/net')
+const {move_avail_to_locked
+	, adjust_balances_on_transfer
+} = require('../utils/db-balance' )
+const { respok , resperr}=require('../utils/rest')
+const LOGGER=console.log
+ 
 /* GET home page. */
 /** router.get('/', function(req, res, next) {
   res.render('index', { title: 'Express' });
 }) */
+// /report/auction/english
+const MAP_TXTYPES_CODE ={
+	OPEN_AUCTION_ENGLISH : 1
+	, PUT_BID_TO_AUCTION : 2
+}
+// , API_REPORT_BID_TO_AUCTION : `${apiServer}/transactions/report/auction/english/bid` // /:txhash
+router.post('/report/auction/english/bid/:txhash' , async(req,res)=>{
+	let { txhash}=req.params
+	let { itemid
+		, auctionuuid 
+		, seller
+		, username // due to kaikas 
+		, price
+		, priceunit
+		, nettype
+		, typestr
+		, tokenid
+	}=req.body ; LOGGER(req.body )
+	if ( auctionuuid && username && price ) {}
+	else {resperr( res, messages.MSG_ARGMISSING) ; return }
+	let respbid = await findone ('bids', {txhash} )
+	if ( respbid ) {resperr(res , messages.MSG_DATADUPLICATE,null,{payload : {reason:'txhash-duplicate'}} ); return }
+	findone('orders', {uuid : auctionuuid , active : 1 } ).then(async resp=>{
+		if (resp){}
+		else {resperr( res, messages.MSG_DATANOTFOUND, null, {payload: {reason:'corresponding-order-not-found' } } ) ; return }
+		let aprevbids=await findall ( 'bids', { basesaleuuid : auctionuuid		})
+		let uuid=create_uuid_via_namespace( txhash) //  uuidv4()
+		if ( aprevbids && aprevbids.length) { 
+			aprevbids.forEach (async elem=>{
+				await moverow( 'bids' , { id:elem.id } , 'logbids', { outbidderuuid : uuid , active : 0}  ) 
+			})
+		}
+		await createrow ( 'bids', {	txhash
+			, itemid
+			, seller
+			, bidder : username
+			, price
+			, priceunit
+			, nettype
+			, uuid
+			, status : 1
+			, username
+			, basesaleuuid : auctionuuid
+			, active : 1
+		})
+		createifnoneexistent( 'itemhistory' , {			txhash				} , {
+			itemid
+			, from_ : username
+			, to_ : seller
+			, price
+			, typestr
+			, tokenid : (tokenid? tokenid: null)
+			, isonchain : 1
+			, nettype
+			, uuid
+			, status : 1
+		 } )
+		respok ( res, null,null, { payload : {uuid}})
+		await logical_op( 'items' , {itemid} , 'salestatus' , MAP_SALESTATUS_STR[ 'BID' ] , 'or' )
+	})
+})
+/**itemhistory;
+| itemid         | varchar(100)     
+| iteminstanceid | int(10) unsigned 
+| from_          | varchar(80)      
+| to_            | varchar(80)      
+| price          | varchar(20)      
+| priceunit      | varchar(20)      
+| typestr        | varchar(20)      
+| type           | tinyint(4)       
+| datahash       | varchar(100)     
+| tokenid        | varchar(20)      
+| txtype         | tinyint(4)       
+| isonchain      | tinyint(4)       
+| nettype        | varchar(20)      
+| uuid           | varchar(50)      
+| status         | tinyint(4)       
+| txhash         | varchar(80)      
+*/
 
-router.post('/:txhash', ( req, res )=> {	
-	let {txhash}=req.params
+/**desc bids ;
+| saleid       | int(10) unsigned | YES  |     | NULL                |                               |
+| itemid       | varchar(100)     | YES  |     | NULL                |                               |
+| seller       | varchar(80)      | YES  |     | NULL                |                               |
+| bidder       | varchar(80)      | YES  |     | NULL                |                               |
+| price        | varchar(20)      | YES  |     | NULL                |                               |
+| priceunit    | varchar(20)      | YES  |     | NULL                |                               |
+| txhash       | varchar(80)      | YES  |     | NULL                |                               |
+| nettype      | varchar(20)      | YES  |     | NULL                |                               |
+| uuid         | varchar(50)      | YES  |     | NULL                |                               |
+| status       | tinyint(4)       | YES  |     | NULL                |                               |
+| username     | varchar(80)      | YES  |     | NULL                |                               |
+| basesaleuuid | varchar(50)      | YES  |     | NULL                |                               |
+| active       | tinyint(4)       | YES  |     |
+*/
+router.post('/report/sale/close/:txhash' , async(req,res)=>{
+	let { txhash}=req.params
+	let { itemid
+		, tokenid
+		, amount
+		, price
+		, username
+		, seller
+		, buyer
+		, matcher_contract
+		, token_repo_contract
+		, adminfee // {address : '',amount:'',rate:''}
+		, refererfee // {address : '',amount:'',rate:''}
+		, authorfee // {address : '',amount:'',rate:''}
+		, sellorderuuid
+		, nettype
+	} = req.body ; LOGGER('' , req.body )
+	let typestr='CLOSE_SALE'
+	let uuid=create_uuid_via_namespace( txhash) //  uuidv4()
+	await createifnoneexistent( 'transactions', {txhash } , { username,itemid,typestr , amount, price , nettype } )
+	respok ( res ,null,null, {payload : { uuid } } )
+	createrow ( 'logactions', {
+		username
+		, typestr
+		, itemid
+		, tokenid
+		, amount
+		, nettype : NETTYPE
+		, uuid
+		, txhash
+		, status : 1
+	})	
+	await adjust_balances_on_transfer( seller ,buyer,itemid , amount ) 	// const adjust_balances_on_transfer=async(from,to,itemid,amount)=>{
+ 	createifnoneexistent ( 'itemhistory' , { txhash } 	 	, 
+		{	itemid
+			, from_ : seller 
+			, to_ : buyer 
+			, price
+			, priceunit : PRICEUNIT_DEF
+			, typestr
+			, tokenid
+			, isonchain : 1
+			, nettype : NETTYPE
+			, uuid
+	})
+	{	let {address,amount,rate} = adminfee
+		await createrow ( 'logfeepayouts' , {
+			receiver : address
+			, contract : matcher_contract
+			, buyer,seller
+			, strikeprice : price
+			, amount
+			, amountunit : PRICEUNIT_DEF
+			, itemid
+			, nettype : NETTYPE
+			,	uuid
+			, txhash
+			, receiverrolestr : 'ADMIN'
+			, subtypestr : 'SALE-SPOT'
+		})
+	}
+	{	let {address,amount,rate} = authorfee
+		await createrow ( 'logfeepayouts' , {
+			receiver : address
+			, contract : matcher_contract
+			, buyer,seller
+			, strikeprice : price
+			, amount
+			, amountunit : PRICEUNIT_DEF
+			, itemid
+			, nettype : NETTYPE
+			,	uuid
+			, txhash
+			, receiverrolestr : 'AUTHOR'
+		})	
+	}
+	{ if (refererfee){}
+		else {return }
+		let {address,amount,rate}=refererfee
+		createrow ( 'logfeepayouts' , {
+			receiver : address
+			, contract : matcher_contract
+			, buyer,seller
+			, strikeprice : price
+			, amount
+			, amountunit : PRICEUNIT_DEF
+			, itemid
+			, nettype : NETTYPE
+			,	uuid
+			, txhash
+			, receiverrolestr : 'REFERER'
+		})	
+	}
+//	await updaterow ( 'orders' , { uuid : sellorderuuid } , {active:0 } )
+	 moverow( 'orders'
+		, { uuid : sellorderuuid } 
+		, 'logorders'
+		, { closingtxhash : txhash , buyer,seller } 
+	) // (fromtable, jfilter, totable , auxdata)
+	findone('users02' , {username : seller} ).then(resp=>{
+		if ( resp){
+			let jmaxprice
+			updaterow ( 'users02' , {id:resp.id} , {
+				countsales : 1 + resp.countsales
+				, sumsales : + price + +resp.sumsales  
+				, sumsalesfloat : +price + resp.sumsalesfloat
+				, maxstrikeprice : +price> +resp.maxstrikeprice ? price : resp.maxstrikeprice
+				, maxstrikepricefloat : +price> +resp.maxstrikeprice ? price : resp.maxstrikepricefloat 
+			})
+		}		else { createrow ( 'users02' , { 
+			countsales : 1
+			, sumsales : price
+			, sumsalesfloat : price
+			, maxstrikeprice : price
+			, maxstrikepricefloat : price
+//			, nickname : 
+		})
+		}
+	})
+	findone('users02', {username : buyer } ).then(resp=>{
+		if ( resp){
+			updaterow ( 'users02', {
+				countbuys : 1 + resp.countbuys
+				, maxstrikeprice : +price> +resp.maxstrikeprice ? price : resp.maxstrikeprice				
+				, maxstrikepricefloat : +price> +resp.maxstrikeprice ? price : resp.maxstrikepricefloat
+				, sumbuys : price
+				, sumbuysfloat : price
+			})
+		} else 	{
+			createrow ('users02', {
+				countbuys : 1
+				, maxstrikeprice : price
+				, maxstrikepricefloat : price
+				, sumbuys : price
+				, sumbuysfloat : price
+			})
+		}
+	})
+	incrementrow({table : 'items' 
+		,jfilter: {itemid} 
+		,fieldname:`salestatus${MAP_SALESTATUS_STR['COMMON'] }`
+		,incvalue : -1 } )
+})
+router.post('/report/auction/english/open/:txhash' ,async (req,res)=>{
+	let { txhash}=req.params
+	let {		itemid
+		, tokenid
+		, amount
+		, startingtime
+		, startingprice
+		, expiry
+		, username
+		, matcher_contract
+		, token_repo_contract
+	}=req.body
+	let typestr='OPEN-AUCTION-ENGLISH'
+	let uuid=create_uuid_via_namespace( txhash) //  uuidv4()
+	await createifnoneexistent( 'transactions', {txhash } , { username,itemid,typestr , amount, price : startingprice } )
+	await createrow ( 'orders' , {
+		matcher_contract
+		, username
+		, asset_id_bid : tokenid
+		, asset_amount_bid : amount
+//		, asset_id_ask :  
+		, asset_amount_ask : startingprice
+		, markerortaker : 0
+		, uuid // 
+		, itemid
+		, type : MAP_TXTYPES_CODE [ typestr ]
+		, typestr
+		, supertype: 1 // sell
+		, supertypestr: 'SELL'
+		, price :startingprice
+		, expiry
+		, expirychar : moment.unix(expiry).format(TIMESTRFORMAT)
+		, tokenid	
+	})
+	let respadjust = await move_avail_to_locked ( username , itemid , amount)	
+	respok ( res ,null,null, {payload : { uuid } } )
+	createrow ( 'logactions', {
+		username
+		, typestr
+		, itemid
+		, tokenid
+		, amount
+		, nettype : NETTYPE
+		, uuid
+		, txhash
+		, status : 1
+	})
+	createifnoneexistent ( 'itemhistory' , { txhash } 
+	 	, {		itemid
+			, from_ : username
+			, to_ : username
+			, price : startingprice
+			, priceunit : PRICEUNIT_DEF
+			, typestr
+			, tokenid
+			, isonchain : 1
+			, nettype : NETTYPE
+			, uuid
+			, txhash
+	})	
+})
+/**logfeepayouts;
+| receiver        | varchar(80) 
+| contract        | varchar(80) 
+| paymeans        | varchar(80) 
+| paymeansname    | varchar(20) 
+| amount          | varchar(20) 
+| txhash          | varchar(80) 
+| receiverrolestr | varchar(20) 
+| receiverrole    | tinyint(4)  
+*/
+/** orders
+		matcher_contract | varchar(80) 
+| username           | varchar(80) 
+| asset_contract_bid | varchar(80) 
+| asset_id_bid       | bigint(20) u
+| asset_amount_bid   | varchar(20) 
+| asset_contract_ask | varchar(80) 
+| asset_id_ask       | bigint(20)  
+| asset_amount_ask   | varchar(20) 
+| makerortaker       | tinyint(4)  
+| uuid               | varchar(80) 
+| sig_r              | varchar(80) 
+| sig_s              | varchar(80) 
+| sig_v              | varchar(10) 
+| signature          | varchar(100)
+| datahash           | varchar(100)
+| itemid             | varchar(100)
+| type               | tinyint(4)  
+| typestr            | varchar(40) 
+| rawdata_to_sign    | varchar(3000
+| supertype          | tinyint(4)  
+| supertypestr       | varchar(20) 
+| rawdatahash        | varchar(80) 
+| signaturestr       | varchar(200)
+| isprivate          | tinyint(4)  
+| privateaddress     | varchar(80) 
+| price              | varchar(20) 
+| expiry             | bigint(20) u
+| expirychar         | varchar(30) 
+| tokenid            | bigint(20) u
+*/
+/** transactions;
+| username   | varchar(80) 
+| txhash     | varchar(80) 
+| itemid     | varchar(80) 
+| type       | tinyint(4)  
+| value      | varchar(20) 
+| price      | varchar(20) 
+| seller     | varchar(80) 
+| buyer      | varchar(80) 
+| status     | tinyint(4)  
+| originator | varchar(80) 
+| typestr    | varchar(20) 
+| paymeans   | varchar(80) 
+| tokenid    | bigint(20) u
+| priceunit  | varchar(20) 
+| from_      | varchar(80) 
+| to_        | varchar(80) 
+| uuid       | varchar(100)
+| nettype    | varchar(20) 
+*/
+
+router.post('/:txhash/:address', async ( req, res )=> {	
+	let {txhash , address }=req.params
 	let username=getusernamefromsession ( req)
 	if ( username ) {}
 	else {resperr( res, messages.MSG_PLEASELOGIN);return  }
@@ -25,36 +404,17 @@ router.post('/:txhash', ( req, res )=> {
 		, to_
 	} = req.body
 	let uuid = create_uuid_via_namespace( txhash )
-	createifnoneexistent( 'transactions',{ txhash } ,  {
+	await createifnoneexistent( 'transactions',{ txhash } , {
 		... req.body
 		, uuid   
-	}).then(resp=>{
-		respok(res , null , null , {payload: {uuid } })
-	}) 
-	gettxandwritetodb(txhash).then(resp=>{
-	})
+	}) // .then(resp=>{
+	
+	respok(res , null , null , {payload: {uuid } })
+// 	}) 
+//	gettxandwritetodb(txhash).then(resp=>{
+	//})
 })
 
 module.exports = router
 
-/** transactions;
-| username   | varchar(80)         | YES  |     | NULL                |                               |
-| txhash     | varchar(80)         | YES  |     | NULL                |                               |
-| itemid     | varchar(80)         | YES  |     | NULL                |                               |
-| type       | tinyint(4)          | YES  |     | NULL                |                               |
-| value      | varchar(20)         | YES  |     | NULL                |                               |
-| price      | varchar(20)         | YES  |     | NULL                |                               |
-| seller     | varchar(80)         | YES  |     | NULL                |                               |
-| buyer      | varchar(80)         | YES  |     | NULL                |                               |
-| status     | tinyint(4)          | YES  |     | -1                  |                               |
-| originator | varchar(80)         | YES  |     | NULL                |                               |
-| typestr    | varchar(20)         | YES  |     | NULL                |                               |
-| paymeans   | varchar(80)         | YES  |     | NULL                |                               |
-| tokenid    | bigint(20) unsigned | YES  |     | NULL                |                               |
-| priceunit  | varchar(20)         | YES  |     | NULL                |                               |
-| from_      | varchar(80)         | YES  |     | NULL                |                               |
-| to_        | varchar(80)         | YES  |     | NULL                |                               |
-| uuid       | varchar(100)        | YES  |     | NULL                |                               |
-| nettype    | varchar(20)         | YES  | 
-*/
 

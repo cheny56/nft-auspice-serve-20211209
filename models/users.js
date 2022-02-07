@@ -62,12 +62,14 @@ module.exports = function(sequelize, DataTypes) {
       defaultValue: 0
     },
     countowned: {
-      type: DataTypes.INTEGER(10).UNSIGNED,
-      allowNull: true
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      defaultValue: 0
     },
     countcreated: {
-      type: DataTypes.INTEGER(10).UNSIGNED,
-      allowNull: true
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      defaultValue: 0
     },
     address: {
       type: DataTypes.STRING(80),
@@ -100,6 +102,24 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: true
     },
     icanmint: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 1
+    },
+    payGas: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 0
+    },
+    storename: {
+      type: DataTypes.STRING(80),
+      allowNull: true
+    },
+    description: {
+      type: DataTypes.STRING(1000),
+      allowNull: true
+    },
+    active: {
       type: DataTypes.INTEGER(4),
       allowNull: true,
       defaultValue: 1

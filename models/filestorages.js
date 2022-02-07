@@ -86,6 +86,10 @@ module.exports = function(sequelize, DataTypes) {
     thumb04: {
       type: DataTypes.STRING(1000),
       allowNull: true
+    },
+    filebasename: {
+      type: DataTypes.STRING(200),
+      allowNull: true
     }
   }, {
     sequelize,

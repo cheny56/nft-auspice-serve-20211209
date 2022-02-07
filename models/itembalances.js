@@ -45,16 +45,43 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: true
     },
     hidden: {
-      type: DataTypes.BIGINT,
-      allowNull: true
+      type: DataTypes.INTEGER(3).UNSIGNED,
+      allowNull: true,
+      defaultValue: 0
     },
     visible: {
-      type: DataTypes.BIGINT,
-      allowNull: true
+      type: DataTypes.INTEGER(3).UNSIGNED,
+      allowNull: true,
+      defaultValue: 1
     },
     decimals: {
       type: DataTypes.INTEGER(4),
       allowNull: true
+    },
+    nickname: {
+      type: DataTypes.STRING(80),
+      allowNull: true
+    },
+    nettype: {
+      type: DataTypes.STRING(40),
+      allowNull: true
+    },
+    uuid: {
+      type: DataTypes.STRING(50),
+      allowNull: true
+    },
+    txhash: {
+      type: DataTypes.STRING(80),
+      allowNull: true
+    },
+    status: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true
+    },
+    active: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 1
     }
   }, {
     sequelize,

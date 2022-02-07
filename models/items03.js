@@ -1,7 +1,7 @@
 /* jshint indent: 2 */
 
 module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('users02', {
+  return sequelize.define('items03', {
     id: {
       autoIncrement: true,
       type: DataTypes.INTEGER(10).UNSIGNED,
@@ -17,61 +17,62 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: true
     },
-    username: {
+    itemid: {
       type: DataTypes.STRING(80),
       allowNull: true
     },
-    countsales: {
-      type: DataTypes.INTEGER(10).UNSIGNED,
-      allowNull: true,
-      defaultValue: 0
-    },
-    countbuys: {
-      type: DataTypes.INTEGER(10).UNSIGNED,
-      allowNull: true,
-      defaultValue: 0
-    },
-    sumsales: {
+    maxsaleprice: {
       type: DataTypes.STRING(20),
       allowNull: true,
       defaultValue: "0"
     },
-    sumsalesfloat: {
-      type: DataTypes.FLOAT,
+    minsaleprice: {
+      type: DataTypes.STRING(20),
       allowNull: true,
-      defaultValue: 0
+      defaultValue: "1000000"
     },
-    maxstrikeprice: {
+    cumulsaleamount: {
       type: DataTypes.STRING(20),
       allowNull: true,
       defaultValue: "0"
     },
-    maxstrikepricefloat: {
-      type: DataTypes.FLOAT,
+    cumulsalecount: {
+      type: DataTypes.BIGINT,
       allowNull: true,
       defaultValue: 0
     },
-    sumbuys: {
-      type: DataTypes.STRING(20),
-      allowNull: true,
-      defaultValue: "0"
-    },
-    sumbuysfloat: {
-      type: DataTypes.FLOAT,
+    cumulsalepayments: {
+      type: DataTypes.BIGINT,
       allowNull: true,
       defaultValue: 0
     },
-    nickname: {
-      type: DataTypes.STRING(60),
-      allowNull: true
+    countholders: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      defaultValue: 0
     },
-    active: {
+    salestatus1: {
       type: DataTypes.INTEGER(4),
       allowNull: true,
-      defaultValue: 1
+      defaultValue: 0
+    },
+    salestatus2: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 0
+    },
+    salestatus4: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 0
+    },
+    salestatus8: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 0
     }
   }, {
     sequelize,
-    tableName: 'users02'
+    tableName: 'items03'
   });
 };

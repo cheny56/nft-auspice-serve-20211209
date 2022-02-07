@@ -5,9 +5,7 @@ const { generaterandomhex ,LOGGER , gettimestr , gettimestr_raw , filter_json_by
 	, generaterandomstr
 	, create_uuid_via_namespace 
  }=require('../utils/common')
-const {findone,findall , createifnoneexistent , createorupdaterow , updaterow , incrementrow , createrow
-	, logical_op
- }=require('../utils/db')
+const {findone,findall , createifnoneexistent , createorupdaterow , updaterow , incrementrow , createrow }=require('../utils/db')
 const {createifnoneexistent:createifnoneexistent_dbmon , updaterow:updaterow_dbmon }=require('../utils/dbmon')
 const {get_ipfsformatcid_file}=require('../utils/ipfscid')
 const {getusernamefromsession}=require('../utils/session')
@@ -15,9 +13,7 @@ const dbmon=require('../modelsmongo')
 const fs=require('fs')
 const {messages}=require('../configs/messages')
 const {respok,resperr,respreqinvalid  ,resperrwithstatus  }=require('../utils/rest')
-const {CDN_PATH , PRICEUNIT_DEF
-	, MAP_SALESTATUS_STR
- }=require('../configs/configs')
+const {CDN_PATH , PRICEUNIT_DEF }=require('../configs/configs')
 const {generateitemid}=require('../utils/items')
 const shell = require('shelljs')
 const db=require('../models')
@@ -45,7 +41,6 @@ const {get_ipfsformatcid_str}=require('../utils/ipfscid')
 const moment=require('moment')
 const geturlfromitemid=itemid=>`${URL_SELF_DEF}/${itemid}/metadata.json`
 const cliredisa=require('async-redis').createClient()
-const { NETTYPE } =require('../configs/net')
 const TIME_STR_FORMAT='YYYYMMDDTHHmmss'
 const getfilename=file=>{
   const ext=path.extname(file.originalname);
@@ -71,8 +66,8 @@ const filehandler=multer({
 }) 
 const { promisify } = require('util')
 const sizeOf = promisify(require('image-size'))
-///////////
-router.post('/mint/active/:txhash' ,async (req,res)=>{ LOGGER( 'CNngTgEPTf' ,req.body )// mint
+
+router.post('/mint' ,async (req,res)=>{ // lazy mint
 	const username = getusernamefromsession ( req )
  	if ( username) {}
 	else { resperr( res , messages.MSG_PLEASELOGIN , 13974 ); return }
@@ -83,13 +78,11 @@ router.post('/mint/active/:txhash' ,async (req,res)=>{ LOGGER( 'CNngTgEPTf' ,req
 		, expiry // 
 		, categorystr
 		, author
-		, authorfee
-		, nettype 
-		, tokenid 
+		, authorfee	 
 	}=req.body
 	if ( itemid && itemid.length ) {}
-	else {resperr(res, messages.MSG_ARGMISSING );return } /****** */
-	let {txhash}=req.params
+	else {resperr(res, messages.MSG_ARGMISSING );return }
+/****** */
   let resp_deny_dup_itemid = await findone('settings' , { key_: 'DENY_DUPLICATE_ID_ON_STORE'} )
   if (resp_deny_dup_itemid && +resp_deny_dup_itemid.value_ > 0 ){
     let resp_item_hexid = await findone('items' , { itemid  , status : 1} )
@@ -97,21 +90,17 @@ router.post('/mint/active/:txhash' ,async (req,res)=>{ LOGGER( 'CNngTgEPTf' ,req
       resperr( res, messages.MSG_DUPLICATE_ITEMID ) ;return
     }  else {}
   }
-  else {}	/****** */
+  else {}
+/****** */
 	let uuid = create_uuid_via_namespace ( itemid ) // let uuid = uuidv4()
 	let respcreateitem = await createrow ( 'items' , {
 		itemid
 		, categorystr : categorystr?.substr(0,20 )
 		, author : username
 		, authorfee	
+		, uuid
 		, amount
 		, decimals
-		, tokenid 
-		, nettype : nettype ? nettype : NETTYPE
-		, uuid
-		, txhash
-//		, status
-		, ... req.body
 	})
 //	.then(async resp=>{
 		respok (res
@@ -127,19 +116,16 @@ router.post('/mint/active/:txhash' ,async (req,res)=>{ LOGGER( 'CNngTgEPTf' ,req
 		, amount  
 		, avail : amount 
 		, locked  : 0
-		, tokenid :  tokenid ? tokenid :null
+		, tokenid : null 
 		, hidden : 0  	
 		, visible : 1
-		, nettype : nettype ? nettype : NETTYPE
-		, uuid
-		, txhash 
 		})
 		createrow( 'merchandises' , {
 			uuid     
 			, type : 1 
 			, typestr : 'single' // item' 
 			, username 
-//			, price
+			, price    
 			, isonsale : 1 
 		})
 		let create_collection_on_mint=1
@@ -155,149 +141,7 @@ router.post('/mint/active/:txhash' ,async (req,res)=>{ LOGGER( 'CNngTgEPTf' ,req
 			})
 			respmycollection = respcreatecollection.dataValues
 		}
-		await logical_op( 'items' , {itemid} , 'salestatus' , MAP_SALESTATUS_STR['new'] , 'or' )
-		createrow ( 'collectionhasitems' , {
-			itemid 
-			, collectionuuid : respmycollection.uuid 
-			, uuid : create_uuid_via_namespace ( `${username}_${respmycollection.uuid}_${itemid}` )
-		})
-//		findone('settings', {key_:'CREATE_COLLECTION_ON_FIRST_MINT'}).then(resp=>{
-	//		if (resp){create_collection_on_mint = + resp.value_}		//	else {}
-//			if ( create_collection_on_mint ){		//	} else {}	//		})
-//	})
-})
-
-///////////
-router.post('/mint/lazy' ,async (req,res)=>{ LOGGER( '' ,req.body )// lazy mint
-	const username = getusernamefromsession ( req )
- 	if ( username) {}
-	else { resperr( res , messages.MSG_PLEASELOGIN , 13974 ); return }
-	let { itemid
-		, url
-		, titlename
-		, description
-		, metadataurl
-		, categorystr
-		, author
-		, authorfee	 
-		, countcopies
-//		, amount
-//		, decimals
-	//	, expiry // 
-	}=req.body
-	if ( itemid && itemid.length ) {}
-	else {resperr(res, messages.MSG_ARGMISSING );return } /****** */
-  let resp_deny_dup_itemid = await findone('settings' , { key_: 'DENY_DUPLICATE_ID_ON_STORE'} )
-  if (resp_deny_dup_itemid && +resp_deny_dup_itemid.value_ > 0 ){
-    let resp_item_hexid = await findone('items' , { itemid  , status : 1} )
-    if ( resp_item_hexid ){
-      resperr( res, messages.MSG_DUPLICATE_ITEMID ) ;return
-    }  else {}
-  }
-  else {}	/****** */
-	let uuid = create_uuid_via_namespace ( itemid ) // let uuid = uuidv4()
-	let status =1
-	let actiontype='REGISTER_ITEM'
-	let respcreateitem = await createrow ( 'items' , {
-		itemid
-		, categorystr : categorystr?.substr(0,20 )
-		, author : username
-		, authorfee	
-		, uuid //		, decimals
-		, ... req.body
-	}) //	.then(async resp=>{
-		respok (res
-			, null
-			, null
-			, { payload : {
-				uuid
-			}}
-		)
-	await createrow ( 'filestorages', {
-		 itemid 
-	,	rawfileurl : url
-	, metadataurl    
-	, filebasename :  path.basename( url ) 
-	})
-	await createifnoneexistent( 'itemhistory', {itemid } , { // , txhash 
-		txtype: MAP_ITEMTXTYPES['REGISTER_ITEM']
-		, isonchain : 0 // :net type=='BNB'? 1:0
-//		, chai ntype : net type // =='BNB'? 'ETH':null
-		, type : MAP_ITEMTXTYPES['REGISTER_ITEM']
-		, typestr: 'REGISTER_ITEM'
-		, from_:username
-		, to_:username  //		, txhash
-//		, nettype : nettype ? nettype : NETTYPE
-		, uuid
-		, status
-	})
-	createrow ( 'logactions' , {
-		username
-		, actiontype: MAP_ACTIONTYPE_CODE[ actiontype ] // MAP_ITEMTXTYPES['MINT_SELL']
-    , actionname : actiontype
-//    , seller : username
-  //  , buyer : username
-//    , amount  : price
-    , note : null
-		, itemid 
-//		, price
-	// ,	priceunit // : ''
-		, typestr: actiontype 
-		, from_:username
-		, to_:username  //		, txhash
-//		, nettype : nettype ? nettype : NETTYPE
-		, uuid
-//		,txhash
-		, status
-	})
-	findone('users' , {username}).then(userdata=>{
-		if (userdata){}
-		else {LOGGER('' ,);return}
-		updaterow('users' , {id:userdata.id} , {
-			countcreated: 1 + userdata.countcreated
-			, iscreator : 1 // isoriginator : 1
-			, countowned : 1 + userdata.countowned //  countowners : 1 + userdata.countowners  
-		}).then(resp=>{
-			updaterow_dbmon('users' , {id:userdata.id} , {
-				countcreated: 1 + userdata.countcreated
-				, iscreator : 1 //isoriginator : 1
-				, countowned : 1 + userdata.countowned //  countowners : 1 + userdata.countowners  
-			})
-		})
-	})
-
-		createrow ( 'itembalances' , {
-			username
-		, itemid  
-		, amount : countcopies 
-		, avail : countcopies //  amount 
-		, locked  : 0
-//		, tokenid : null 
-		, hidden : 0  	
-		, visible : 1
-		})
-		createrow( 'merchandises' , {
-			uuid     
-			, type : 1 
-			, typestr : 'single' // item' 
-			, username  //			, price
-			, isonsale : 1 
-		})
-		let create_collection_on_mint=1
-		let respmycollection = await findone( 'collections' , { name : username })
-		if ( respmycollection ) {}
-		else {
-			let respcreatecollection = await createrow ( 'collections' , {
-				username
-				, name : username
-				,	countitems : 1
-				, countsales: 0 
-				, uuid : create_uuid_via_namespace ( username )  
-			})
-			respmycollection = respcreatecollection.dataValues
-		}
-		await logical_op( 'items' , {itemid} , 'salestatus' , MAP_SALESTATUS_STR['new'] , 'or' )
-		createrow ( 'collectionhasitems' , {
+		createrow ( 'colllectionhasitems' , {
 			itemid 
 			, collectionuuid : respmycollection.uuid 
 			, uuid : create_uuid_via_namespace ( `${username}_${respmycollection.uuid}_${itemid}` )
@@ -307,6 +151,7 @@ router.post('/mint/lazy' ,async (req,res)=>{ LOGGER( '' ,req.body )// lazy mint
 		//	else {}
 //			if ( create_collection_on_mint ){
 		//	} else {}
+
 //		})
 //	})
 })
@@ -323,7 +168,7 @@ router.post('/mint/lazy' ,async (req,res)=>{ LOGGER( '' ,req.body )// lazy mint
 | countsales   | bigint(20) unsigned | YES  |     | NULL                |                               |
 uuid
 */
-/** merc handises; 
+/** merchandises; 
 | uuid      | varchar(50) 
 | type      | tinyint(4)  
 | typestr   | varchar(20) 
@@ -331,12 +176,12 @@ uuid
 | price     | varchar(20) 
 | isonsale  | tinyint(4)  
 */
-/** item balances
+/** itembalances
 | username  | varchar(80)         | YES  |     | NULL
 | itemid    | varchar(100)        | YES  |     | NULL
 | amount    | bigint(20)          | YES  |     | 0   
 | avail     | bigint(20)          | YES  |     | 0   
-| lo cked    | bigint(20)          | YES  |     | 0   
+| locked    | bigint(20)          | YES  |     | 0   
 | tokenid   | bigint(20) unsigned | YES  |     | NULL
 | hidden    | bigint(20) unsigned | YES  |     | NULL
 | visible   | bigint(20) unsigned | YES  | 
@@ -356,7 +201,7 @@ uuid
 | totalsupply      | bigint(20) unsigned | YES  |     | NULL                |                               |
 | uuid             | varchar(80)         
 */
-router.post('/metadata/:itemid',async(req,res)=>{ LOGGER('vg1rGp4uVL',req.body)
+router.post('/metadata/:itemid',(req,res)=>{ LOGGER('vg1rGp4uVL',req.body)
 	let {
 		unlockcontent
 		, unlockedcontent
@@ -367,22 +212,16 @@ router.post('/metadata/:itemid',async(req,res)=>{ LOGGER('vg1rGp4uVL',req.body)
 	const username=getusernamefromsession( req) 
 	if ( username ) {}
 	else {resperr( res, messages.MSG_PLEASELOGIN );return }
-	let { itemid }=req.params
+	let {itemid}=req.params
 //	LOGGER(req.body)
-//	let fullpathnamedest=`${PATH_STORE_DEF_BASE}/metadata/${itemid}`
-	let respitemid = await findone( 'items', {itemid})
-	if ( respitemid){	resperr( res, messages.MSG_DATADUPLICATE);return }
-	else {}
-	let fullpathnamedest=`${PATH_STORE_DEF_BASE}/repo/${itemid}`
+	let fullpathnamedest=`${PATH_STORE_DEF_BASE}/metadata/${itemid}`
   if (! fs.existsSync( fullpathnamedest )) {   shell.mkdir('-p' , fullpathnamedest ) }
 	let timestamp=gettimestr()
 	req.body['timestamp'] =timestamp 
 	req.body['unixtime']=moment( timestamp ).unix()
-	let filenamedestproper = `${fullpathnamedest}/metadata.json`
-	let url = `${URL_SELF_DEF_BASE}/repo/${itemid}/metadata.json`
-	fs.writeFile(  filenamedestproper , STRINGER(req.body), err=>{
+	fs.writeFile( `${fullpathnamedest}/meta.json` , STRINGER(req.body), err=>{
 		if(err){LOGGER(err) ; resperr(res,messages.MSG_INTERNALERR); return }
-//		let url = filenamedestproper // `${fullpathnamedest}/` //  geturlfromitemid(itemid)
+		let url = geturlfromitemid(itemid)
 		respok(res , null, null , {respdata: url ,
 			payload : {
 				url
@@ -393,20 +232,13 @@ router.post('/metadata/:itemid',async(req,res)=>{ LOGGER('vg1rGp4uVL',req.body)
 	})
 })
 
-router.post('/store/base64', async(req,res)=>{ LOGGER('s62BbGD03N' , req.body)
-	let username = getusernamefromsession ( req ) 
-	if(username){} 
-	else if (username = req.body.username){}
-	else {resperr(res,messages.MSG_PLEASELOGIN );return}
+router.post('/store/base64', async(req,res)=>{
+	const username = getusernamefromsession ( req ) 
+	 if(username){} else {resperr(res,messages.MSG_ARGMISSING);return}
   const {datainbase64,filename  }=req.body// address, 
   LOGGER('tz2e15eKg0' ,filename , datainbase64.substr(0,500 ))
   if(datainbase64 && filename && username){} else {resperr (res,messages.MSG_ARGMISSING);return}
-  let hexid =get_ipfsformatcid_str(datainbase64) ;   LOGGER('UeMP2Xvo5a',hexid )
-	let itemid = hexid
-	let respitem = await findone('items', { itemid } )
-	if ( respitem ) {resperr( res, messages.MSG_DUPLICATE_ITEMID , 81504 ); return }
-	else { }
-
+  let hexid =get_ipfsformatcid_str(datainbase64) ;   LOGGER('UeMP2Xvo5a',hexid)
   let resstore = await storefile_from_base64data(datainbase64 , filename, hexid , 'temp') //  type_perm_temp'perm' 
   if(resstore){} else {resperr(res,messages.MSG_INTERNALERR);return }
   LOGGER('My9otEb4Ey' , resstore)
@@ -446,10 +278,6 @@ router.post('/store/base64', async(req,res)=>{ LOGGER('s62BbGD03N' , req.body)
       , imageheight : imagedim.height
     })
   })
-		await logical_op( 'items' , {itemid} , 'salestatus' , MAP_SALESTATUS_STR['new'] , 'or' )
-		{	let jdata={} ; jdata[ `salestatus${MAP_SALESTATUS_STR['new']}` ] = 1
-			updaterow ( 'items', {itemid} , {... jdata } )
-		}
 })
 router.post('/store/file' , filehandler.single('file' ),async(req,res)=>{ // /:type0
 //	res.status(200).send( req )
@@ -509,15 +337,12 @@ router.post( '/report/mint/:hexid/:txhash/:address',async(req,res)=>{
 		, priceunit 
 		, metadataurl 
 		, contract
-		, nettype 
+		, nettype
 		, paymeans
 		, expiry
 		, expirychar
 		, categorystr
-//		, originatorfeeinbp
-		, author
-		, authorfee
-		, countcopies
+		, originatorfeeinbp
  }=req.body ; LOGGER(hexid,txhash,price,tokenid)
 //	let userdata=getuserdatafromsession(req) ; LOGGER('Tm7uu64bqE' , userdata)
 	if( B_ENFORCE_NO_DUPLICATE_ITEMID){
@@ -526,7 +351,7 @@ router.post( '/report/mint/:hexid/:txhash/:address',async(req,res)=>{
 			resperr(res,messages.MSG_DATADUPLICATE);return
 		} else {}
 	}
-/**	findone('users' , {username}).then(userdata=>{
+	findone('users' , {username}).then(userdata=>{
 		updaterow('users' , {id:userdata.id} , {
 			countcreated: 1 + userdata.countcreated
 			, iscreator : 1 // isoriginator : 1
@@ -538,7 +363,7 @@ router.post( '/report/mint/:hexid/:txhash/:address',async(req,res)=>{
 				, countowned : 1 + userdata.countowned //  countowners : 1 + userdata.countowners  
 			})
 		})
-	})*/
+	})
 /**	let respfind =await findone('itemsdatacache',{itemid:hexid})
 	if(respfind){} else {resperr(res,messages.MSG_DATANOTFOUND , 412 );return}
 	const {filepath:filepathsrc}=respfind
@@ -548,7 +373,7 @@ router.post( '/report/mint/:hexid/:txhash/:address',async(req,res)=>{
 	fs.rename( filepathsrc , filepathdest,_=>{} )
 	url=respfind.url.replace(/\/tmp\// , '/repo/')
 */
-	let uuid = create_uuid_via_namespace ( itemid ) // let uuid = uuidv4()
+	let uuid = uuidv4()
 	respok(res,null,null, {
 		payload : { uuid
 		}
@@ -580,35 +405,33 @@ router.post( '/report/mint/:hexid/:txhash/:address',async(req,res)=>{
 		,	owner : username
 		, tokenid
 		, categorystr
-		, nettype : nettype ? nettype : NETTYPE
+		, nettype
 		, uuid
-	 	, txhash
+	// txhash
 		, status
-		, authorfee // : originatorfeeinbp 
-//		, originatorfeeinbp
-		, author : username
-		, countcopies 
+		, authorfee : originatorfeeinbp 
+		, originatorfeeinbp
+		, author : username 
  })
-	await createrow ( 'filestorages', {
-		 itemid 
-	,	rawfileurl : url
-//	, rawfileurl01   
-//	, rawfileipfs    
-	//, rawfileipfs01  
-//	, rawfiles3      
-	//, rawfiles301    
-	, metadataurl    
-//	, metadataurl01  
-//	, metadataipfs   
-	//, metadataipfs01 
-//	, metadatas3    
-	, filebasename :  path.basename( url ) 
-//	, thumb00        
-	//, thumb01        
-//	, thumb02        
-	//, thumb03        
-//	, thumb04        
-	})
+//	.then(resp=>{
+/*		createifnoneexistent_dbmon('items',{id:respcreateitem.dataValues.id } , 	{txhash:txhash , url:url 
+			,price:price, uploader:address,isminted:1,price:price
+		, priceunit:priceunit?priceunit : PRICEUNIT_DEF 
+		, itemid:hexid , titlename:titlename , description:description , keywords:keywords , createdat:gettimestr() 
+		, description:description
+		, currentowner:username
+		, originator:username
+		, metadataurl , contract
+		,	owner : username
+		, tokenid 
+		, categorystr
+		, nettype
+		, uuid
+		, status
+	// txhash
+		, originatorfeeinbp
+		}) */
+//	})
 /*	createifnoneexistent('collections' , {itemid:hexid},{
 		username:address
 		, datahash:hexid // , txhash:txhash
@@ -617,24 +440,46 @@ router.post( '/report/mint/:hexid/:txhash/:address',async(req,res)=>{
 		, url:url
 	}) */
 	createifnoneexistent( 'itemhistory',{itemid:hexid , txhash } , { // txhash:txhash	}, {
-//		itemid: hexid		, 
-		datahash:hexid
+		itemid: hexid
+		, datahash:hexid
 		, tokenid:tokenid
 //		, seller:username // address
 	//	, buyer:username // null
 		, price
 		, priceunit
 		, txtype: MAP_ITEMTXTYPES['MINT_SELL']
-		, isonchain : 1 // :net type=='BNB'? 1:0
-//		, chai ntype : net type // =='BNB'? 'ETH':null
+		, isonchain : 1 // :nettype=='BNB'? 1:0
+//		, chai ntype : nettype // =='BNB'? 'ETH':null
 		, type : MAP_ITEMTXTYPES['MINT_SELL']
 		, typestr: 'MINT_SELL'
 		, from_:username
 		, to_:username  //		, txhash
-		, nettype : nettype ? nettype : NETTYPE
+		, nettype
 		, uuid
 		, status
 	}).then( resp_23 => {
+/*		dbmon.itemhistory.create({
+			id : resp_23.dataValues.id
+				,	itemid: hexid
+				, datahash:hexid
+				, tokenid:tokenid
+				, seller: username // address
+				, buyer: username // null
+				, price
+				, priceunit
+				, txtype: MAP_ITEMTXTYPES['MINT_SELL']
+				, createdat: timestr_now 
+	, isonchain:priceunit=='ETH'? 1:0
+//	, chain type:priceunit=='ETH'? 'ETH':null 
+		, type : MAP_ITEMTXTYPES['MINT_SELL']
+		, typestr: 'MINT_SELL' 
+		, from_:username
+		, to_:username  //		, txhash
+		, nettype
+		, uuid
+		, txhash:txhash	
+		, status
+		}).then(respmoncreate=>{LOGGER('IAiiGQxdnw' ,respmoncreate )}).catch(err=>{LOGGER('LelKcN2LbB',err )}) */
 	})
 	createrow('logactions' , {
 //	    createdat: timestr_now	
@@ -651,18 +496,38 @@ router.post( '/report/mint/:hexid/:txhash/:address',async(req,res)=>{
 		, typestr: 'MINT_SELL'
 		, from_:username
 		, to_:username  //		, txhash
-		, nettype : nettype ? nettype : NETTYPE
+		, nettype
 		, uuid
 		,txhash
 		, status
 	})
 	.then(resp=>{
+/*		dbmon.logactions.create({
+			id: resp.dataValues.id	
+ ,		createdat: timestr_now	
+    , username :	username
+    , actiontype: MAP_ACTIONTYPE_CODE['TX_MINT_SELL'] // MAP_ITEMTXTYPES['MINT_SELL']
+    , actionname : 'TX_MINT_SELL'
+    , seller : username
+    , buyer : username
+    , amount  : price
+    , note : null	
+		, itemid :  hexid 
+		, price
+	 ,	priceunit // : ''
+		, typestr: 'MINT_SELL'
+		, from_:username
+		, to_:username  //		, txhash
+		, nettype
+		, uuid
+		, txhash
+		, status
+		}) */
 	})
 	createrow('transactions', {
 		username   :username
 		,	itemid:hexid 
-		, typestr   : 'MINT'
-		, type      : MAP_ITEMTXTYPES['MINT']
+		, type      : MAP_ITEMTXTYPES['MINT_SELL']
 		, value     : null
 		, price     :price
  //   , seller : username
@@ -670,12 +535,28 @@ router.post( '/report/mint/:hexid/:txhash/:address',async(req,res)=>{
 		, originator: username
 		, from_:username
 		, to_:username  //		, txhash
-		, amount : countcopies
-		, nettype : nettype ? nettype : NETTYPE
+		, nettype
 		, uuid
 		, txhash
 		, status
 	}).then(resp=>{
+/*		dbmon.transactions.create({
+		id:resp.dataValues.id
+		,		username   :username
+		,	itemid:hexid 
+		, type      : MAP_ITEMTXTYPES['MINT_SELL']
+    , seller : username
+    , buyer : username
+//	, value     : null
+		, price     :price
+		, originator: username
+		, from_:username
+		, to_:username  //		, txhash
+		, nettype
+		, uuid
+		, txhash
+		, status
+		}) */
 	})
 	findone('itemsdatacache' , {itemid} ).then(resp=>{
 		if(resp){} else {return }
@@ -685,6 +566,28 @@ router.post( '/report/mint/:hexid/:txhash/:address',async(req,res)=>{
 		} )
 	})
 	 true && findone( 'paymeans' , {address : paymeans }).then(resp=>{
+		let market = resp.isprimary ? MAP_MARKETTYPE_ID['primary'] : MAP_MARKETTYPE_ID['secondary']
+		respcreateitem.update ( {market} ) 
+/**		createrow ( 'sales' , {
+			itemid
+		, username
+		, paymeans
+		, paymeansname : resp.name
+		, ispaymeanstoken : resp.istoken
+		, market //   1 : 0 //  MAP_TOKEN_ADDRESS_MARKET_TYPE[paym eans]? MAP_TOKEN_ADDRESS_MARKET_TYPE[payme ans] : 0
+		, offerpricechar : price // ''
+		, offerpricefloat : price // ''  
+		, price
+		, priceunit
+		, typestr : 'COMMON'
+		, expiry
+		, expirychar
+		, seller : username
+		, nettype
+		, uuid
+		, txhash
+		, status
+		}) */
 	})
 	cliredisa.hset('TX-TABLES' ,txhash , STRINGER(
 		{type:'MINT'
@@ -699,39 +602,6 @@ router.post( '/report/mint/:hexid/:txhash/:address',async(req,res)=>{
 		})).then(resp=>{
 //		enqueue_tx_toclose( txhash , uuid )		
 	})
-	findone('users' , {username}).then(userdata=>{
-		if (userdata){}
-		else {LOGGER('' ,);return}
-		updaterow('users' , {id:userdata.id} , {
-			countcreated: 1 + userdata.countcreated
-			, iscreator : 1 // isoriginator : 1
-			, countowned : 1 + userdata.countowned //  countowners : 1 + userdata.countowners  
-		}).then(resp=>{
-			updaterow_dbmon('users' , {id:userdata.id} , {
-				countcreated: 1 + userdata.countcreated
-				, iscreator : 1 //isoriginator : 1
-				, countowned : 1 + userdata.countowned //  countowners : 1 + userdata.countowners  
-			})
-		})
-	})
-		createrow ( 'itembalances' , {
-			username
-		, itemid  
-		, amount : countcopies 
-		, avail : countcopies //  amount 
-		, locked  : 0
-		, tokenid // : null 
-		, hidden : 0  	
-		, visible : 1
-		})
-		createrow( 'merchandises' , {
-			uuid     
-			, type : 1 
-			, typestr : 'single' // item' 
-			, username  //			, price
-			, isonsale : 1 
-		})
-		await logical_op( 'items' , {itemid} , 'salestatus' , MAP_SALESTATUS_STR['new'] , 'or' )
 /** false &&	gettxandwritetodb(txhash).then(resp=>{		LOGGER('JXe01bxqMP',resp)	})	.catch(err=>{LOGGER('vR55t5oZMa',err)})
 	const filebasename = path.parse( url ).base // path.basename(filepathdest)
 	let filepathdest = compose_filename( hexid , filebasename ) // 'rawdata' 
@@ -742,6 +612,7 @@ router.post( '/report/mint/:hexid/:txhash/:address',async(req,res)=>{
 	})	.catch(err=>{LOGGER('vlY2Ni2YFI',err)})
 */
 })
+
 
 module.exports = router;
 

@@ -1,7 +1,7 @@
 /* jshint indent: 2 */
 
 module.exports = function(sequelize, DataTypes) {
-  return sequelize.define('collectionhasitems', {
+  return sequelize.define('logbookmarks', {
     id: {
       autoIncrement: true,
       type: DataTypes.INTEGER(10).UNSIGNED,
@@ -17,25 +17,29 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.DATE,
       allowNull: true
     },
-    collectionid: {
-      type: DataTypes.INTEGER(10).UNSIGNED,
-      allowNull: true,
-      comment: 'collection id'
+    username: {
+      type: DataTypes.STRING(80),
+      allowNull: true
     },
     itemid: {
       type: DataTypes.STRING(100),
       allowNull: true
     },
-    collectionuuid: {
-      type: DataTypes.STRING(80),
+    status: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      comment: '0: i do not like, 1: i do like'
+    },
+    objectid: {
+      type: DataTypes.STRING(100),
       allowNull: true
     },
-    uuid: {
-      type: DataTypes.STRING(50),
+    nickname: {
+      type: DataTypes.STRING(80),
       allowNull: true
     }
   }, {
     sequelize,
-    tableName: 'collectionhasitems'
+    tableName: 'logbookmarks'
   });
 };

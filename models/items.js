@@ -19,7 +19,8 @@ module.exports = function(sequelize, DataTypes) {
     },
     itemid: {
       type: DataTypes.STRING(100),
-      allowNull: true
+      allowNull: true,
+      unique: true
     },
     is1copyonly: {
       type: DataTypes.INTEGER(4),
@@ -145,6 +146,82 @@ module.exports = function(sequelize, DataTypes) {
     },
     market: {
       type: DataTypes.INTEGER(4),
+      allowNull: true
+    },
+    normprice: {
+      type: DataTypes.STRING(20),
+      allowNull: true
+    },
+    countviews: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      defaultValue: 0
+    },
+    active: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 1
+    },
+    url: {
+      type: DataTypes.STRING(1000),
+      allowNull: true
+    },
+    isreviewed: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true
+    },
+    nickname: {
+      type: DataTypes.STRING(80),
+      allowNull: true
+    },
+    isfeatured: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true
+    },
+    countbookmarks: {
+      type: DataTypes.BIGINT,
+      allowNull: true,
+      defaultValue: 0
+    },
+    txhash: {
+      type: DataTypes.STRING(80),
+      allowNull: true
+    },
+    salestatusstr: {
+      type: DataTypes.STRING(40),
+      allowNull: true
+    },
+    salestatus: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 1
+    },
+    salestatus1: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 0
+    },
+    salestatus2: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 0
+    },
+    salestatus4: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 0
+    },
+    salestatus8: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 0
+    },
+    pricemin: {
+      type: DataTypes.FLOAT,
+      allowNull: true
+    },
+    pricemax: {
+      type: DataTypes.FLOAT,
       allowNull: true
     }
   }, {
