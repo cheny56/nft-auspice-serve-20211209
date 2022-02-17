@@ -1,9 +1,10 @@
 {
   "development": { 
-		"host": "localhost",
-		"username": "nftauspice",
-		"password": "JYPhsa2bYdGhcmPgkqB7"
-		, "database":"nftauspice"
+		"host": "localhost"
+		, "username": "triggy"
+		, "password": "root"
+		, "database":"itemverse"
 		, "dialect": "mariadb"
+		
 	}
 }

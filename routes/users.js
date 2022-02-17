@@ -21,7 +21,7 @@ const { createrow : createrow_mon
   , findone : findone_mon
  }=require('../utils/dbmon')
 const TOKENLEN=48
-let { v5 : uuidv5 }=require('uuid')
+let { v5 }=require('uuid')
 
 /* GET users listing. */
 // router.get('/', function(req, res, next) {  res.send('respond with a resource');});
@@ -43,6 +43,16 @@ const createnicks_3letter_ver =_=>{ //      // 3 letter ver
 }
 const WAValidator=require('multicoin-address-validator')
 const STRINGER=JSON.stringify 
+
+//UUID 해싱 키!!!!!!!!!!!!!!!!!!!!!
+const NAMESPACE = Uint8Array.from([
+  0xDE, 0x42, 0xF6, 0xFF,
+  0x21, 0x0C,
+  0xDA, 0x9C,
+  0xA3, 0x0E,
+  0x1A, 0x4A, 0xC2, 0x74, 0x36, 0x56,
+]);
+
 router.get('/user/info/:username',(req,res)=>{
 //	let username=getusernamefromsession(req)
 	// if ( username){}
@@ -75,10 +85,13 @@ router.get('/query-value-exists/:fieldname/:value' , (req,res)=>{
 		})
 	})
 })
+
+//-----CREATE ACCOUNT
 router.post ('/join' , async(req,res)=>{
 	let { profileimage
 		, username
 		, address
+    , nickname
 		, email
 		, agreepromoinfo
 	}=req.body
@@ -91,14 +104,18 @@ router.post ('/join' , async(req,res)=>{
 		if( resp[ 0 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {payload : {dupfield: 'address'} }); return
 		} else {}
 		if( resp[ 1 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {payload : {dupfield: 'username'} }); return
-		} else {}
-		let uuid = uuidv5( uuid , NAMESPACE_FOR_HASH )
+		} else {} 
+		let uuid = v5( nickname , NAMESPACE )
+    console.log(uuid)
 		createrow_mon ('users' , {... req.body , uuid } )
 		delete req.body.profileimage
 		let resp_create = await createrow ('users' , {... req.body , uuid } )
 		respok ( res , null , null , { payload : { uuid }} )
 	})
 }) 
+//----------------------------
+
+//----- SEND AN ACCOUNT VERIFICATION MAIL
 router.get('/email/verifycode/:emailaddress',(req,res)=>{
   const {emailaddress}=req.params
   if(validateemail(emailaddress)){} else {resperr(res,messages.MSG_ARGINVALID );return}
@@ -107,14 +124,21 @@ router.get('/email/verifycode/:emailaddress',(req,res)=>{
     else {resperr(res,resp.reason);return}
   })
 })
+//-----------------------------
+
+//------ CHECKS THE VERIFICATION LINK
 router.post('/email/verifycode/:emailaddress/:code',(req,res)=>{
   const {emailaddress , code }=req.params
   findone('emailverifycode' , {emailaddress : emailaddress}).then(resp=>{
     if(resp){} else {resperr(res,messages.MSG_DATANOTFOUND);return}
     if(resp['code']==code){} else {resperr(res,messages.MSG_VERIFYFAIL);return}
+    updaterow('users' , {email:emailaddress } , { emailverified:true} )
     respok(res)
   })
 })
+//-----------------------------
+
+
 router.put('/user/myinfo',(req,res)=>{
   const username=getusernamefromsession(req);
 	if(username){} else{resperr (res,messages.MSG_PLEASELOGIN);return}	

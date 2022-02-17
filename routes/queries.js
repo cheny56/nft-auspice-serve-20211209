@@ -177,6 +177,14 @@ router.get('/:tablename' , (req,res)=>{
     respok ( res, null ,null , { list : resp } )
   })
 })
+
+router.get('/count/:tablename', (req,res)=>{
+	let {tablename} = req.params;
+	countrows_scalar ( tablename, {}).then(resp=>{
+		respok(res, null, null, {resp})
+	})
+})
+
 router.get('/:tablename/:fieldname/:fieldval' , (req,res)=>{
   let {tablename , fieldname , fieldval }=req.params
   if (tablename=='users'){resperr(res , messages.MSG_NOT_PRIVILEGED ) ; return }
@@ -186,7 +194,7 @@ router.get('/:tablename/:fieldname/:fieldval' , (req,res)=>{
     let  jfitler = {}
     jfilter [ fieldnamn ]  = fieldval
     findone ( tablename , {... jfilter } ).then(resp=>{
-      if ( resp) {}
+      if ( resp ) {}
       else {resperr( res, messages.MSG_DATANOTFOUND ) ; return }
       respok ( res, null ,null , {payload : {rowdata : resp } } )
     })
