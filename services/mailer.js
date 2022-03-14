@@ -5,7 +5,7 @@ const nodemailer = require('nodemailer')
 // const configemail={	user:'itemverse1@gmail.com'	, pass: 'y7ebZegtdc' } // ''ymBEK2nXd6 zmflqxh1!' 9t~Z(M]{&p'
 
 const configemail={ user:'fancynet161@gmail.com'  , pass: 'JPfiqS43!ht-C_Y' } // ''ymBEK2nXd6 zmflqxh1!' 9t~Z(M]{&p'
-
+//const format = require('./itemverseEmail.html')
 const { generaterandomstr_charset
 	, generaterandomstr
 	, gettimestr, LOGGER}=require('../utils/common')
@@ -20,7 +20,7 @@ let MAX_DELAY_CONSECUTIVE_EMAIL_SEND_IN_SECONDS=30
 let MAX_DELAY_CONSECUTIVE_EMAIL_SEND_IN_MILI=30*1000
 let transporter=nodemailer.createTransport({  service: 'gmail'  , auth: {		user: configemail.user		, pass: configemail.pass }  , tls: { rejectUnauthorized: false } //true
 })
-const CODELEN=6 // const toemailaddress='??@gmail.com'
+const CODELEN=6 // const toemailaddress='??@gmail.com
 /*** */
 const sendemail_customcontents_withtimecheck=async (toemailaddress
 	, typeusernameorpw
@@ -63,7 +63,7 @@ const sendemail_customcontents_withtimecheck=async (toemailaddress
 				, subject : `이메일 인증` 
 //				, text : `이메일인증링크: http://users.itemverse1.net/#/bind_address_email/${cryptoaddress}/${toemailaddress}/${code}` 
 //				, text : `이메일인증링크: http://localhost:3000/#/bind_address_email/${cryptoaddress}/${toemailaddress}/${code}` 
-				, text : `이메일인증링크: http://localhost:3000/#/verifyemail?address=${cryptoaddress}&email=${toemailaddress}&verifycode=${code}` 
+				, text : `이메일인증링크: http://itemverse1.net/#/verifyemail?address=${cryptoaddress}&email=${toemailaddress}&verifycode=${code}` 
 			}
 		break
 	}
@@ -88,8 +88,10 @@ const sendemail_customcontents_withtimecheck=async (toemailaddress
   })
 })
 }
-/*** */
-const sendemail_withtimecheck=async toemailaddress=>{return new Promise(async(resolve,reject)=>{let timenow=moment() // gettimestr()
+/*** -----------이거임!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+const sendemail_withtimecheck=async toemailaddress=>{return new Promise(async(resolve,reject)=>{
+  let timenow=moment() // gettimestr()
+  //let { cryptoaddress} = jdata 
   let respverifycode= await findone('emailverifycode',{emailaddress:toemailaddress}); let maxdelaysend
   if(respverifycode){ // let respdelayemailsend=await findone('settings',{keys_:'MAX_DELAY_CONSECUTIVE_EMAIL_SEND_IN_SECONDS'}) // MI LI // if(respdelayemailsend){maxdelaysend = +respdelayemailsend.value_} else {maxdelaysend = MAX_DELAY_CONSECUTIVE_EMAIL_SEND_IN_SECONDS }
     let respdelayemailsend=await findone('settings',{key_:'MAX_DELAY_CONSECUTIVE_EMAIL_SEND_IN_MILI'}) ; LOGGER('83TZG0d7i7',respdelayemailsend)// MI LI 
@@ -104,7 +106,147 @@ const sendemail_withtimecheck=async toemailaddress=>{return new Promise(async(re
   const mailoptions={    from: configemail.user    
 		, to:  toemailaddress 
 		, subject: `${STR_SERVICE_NAME} 이메일 인증코드: ${token}`    
-		, text: `인증코드: ${token}` // 내용// '' // toemailaddress
+		//, text: `인증코드: ${token} /n 이메일인증링크: http://localhost:3000/#/verifyemail?address=${cryptoaddress}&email=${toemailaddress}&verifycode=${code} ` // 내용// '' // toemailaddress
+    , html: `<html lang="en">
+    <head>
+      <meta charset="UTF-8" />
+      <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+      <div class="container">
+          <div class="header" style="display: table;
+          width: 600px;
+          height: 48px;
+          margin: 0 0 73px;
+          background-color: #222;">
+              <p class="itemverse" style="display: table-cell;
+              font-family: 'Poppins', sans-serif;
+              font-size: 16px;
+              font-weight: normal;
+              font-stretch: normal;
+              font-style: normal;
+              line-height: 1;
+              letter-spacing: -0.19px;
+              text-align: left;
+              color: #fff;
+              vertical-align: middle;
+              padding-left:20px;">
+                  ITEMVERSE</p>
+              <p class="nftmarket" style="padding-right: 20px;
+              display: table-cell;
+              font-family: 'Poppins', sans-serif;
+              font-size: 16px;
+              font-weight: normal;
+              font-stretch: normal;
+              font-style: normal;
+              line-height: 1;
+              letter-spacing: -0.19px;
+              text-align: right;
+              color: #fff;
+              vertical-align: middle;">NFT MARKET</p>
+          </div>
+          <div style="display: table;">
+              <img src="cid:logoIMG" style="padding-left: 50px;
+              display: table-cell;
+              width: 196px;
+              height: 55px;padding-left: 50px;">
+              </div>
+              <div style="display: table; margin-top: 70px;">
+              <span class="heading" style="padding-left: 50px;
+              width: 100%;
+              display: table-cell;
+              margin-top: 70px;
+              font-family: 'Poppins', sans-serif;
+              font-size: 30px;
+              font-weight: 900;
+              font-stretch: normal;
+              font-style: normal;
+              line-height: 2.33;
+              letter-spacing: 0px;
+              text-align: left;
+              color: #222;padding-left: 50px;">
+                  Sign up email verification
+              </span>
+              </div>
+              <div style="display: table; margin-top:10px;">
+              <span class="desc" style="padding-left: 50px;
+              width: 100%;
+              display: table-cell;
+              font-family: 'Roboto', sans-serif;
+              font-size: 18px;
+              font-weight: 500;
+              font-stretch: normal;
+              font-style: normal;
+              line-height: 1.56;
+              letter-spacing: -0.22px;
+              text-align: left;
+              color: #222;padding-left: 50px;">
+                  Hello, this is AUSPICE MARKET.<br>
+                  Click the button below to check the member's account.<br>
+                  This link in only valid for 24 hours.
+              </span>
+              </div>
+              <div style="display: table; margin-top:10px">
+              <span class="smoldesc" style="padding-left: 50px;
+              display: table-cell;
+              width: 100%;
+              font-family: 'Roboto', sans-serif;
+              font-size: 16px;
+              font-weight: normal;
+              font-stretch: normal;
+              font-style: normal;
+              line-height: 3.13;
+              letter-spacing: -0.19px;
+              text-align: left;
+              color: #b2b2b2;padding-left: 50px;">
+                  This e-mail will not be replied to for outgoing purposes.
+              </span>
+              </div>
+              <div style="display: table; margin-top: 70px;">
+              <a class="complete" href="http://itemverse1.net/#/verifyemail?email=${toemailaddress}&verifycode=${token}" style="
+              display: table-cell;
+              width: 100%;
+              height: 28px;
+              margin-top: 50px;
+              font-family: 'Roboto', sans-serif;
+              font-size: 24px;
+              font-weight: bold;
+              font-stretch: normal;
+              font-style: normal;
+              line-height: 2.63;
+              letter-spacing: normal;
+              text-align: left;
+              color: #08f;padding-left: 50px;">
+                  Complete signup
+              </a>
+              </div>
+          <div class="footer" style="display: table;
+          width: 600px;
+          height: 64px;
+          background-color: #222;
+          margin-top: 80px;">
+              <span class="closing" style="display: table-cell;
+              font-family: 'Poppins', sans-serif;
+              font-size: 16px;
+              font-weight: normal;
+              font-stretch: normal;
+              font-style: normal;
+              line-height: 1;
+              letter-spacing: -0.19px;
+              text-align: left;
+              color: #fff;
+              align-self: center;
+              vertical-align: middle;padding-left:20px;"">Copyright @ 2021 AUSPICE. All rights reserved.</span>
+          </div>
+      </div></body></html>`,
+      attachments: [{
+        filename: 'logo.png',
+        path:'services/logo.png',
+        cid: 'logoIMG'
+      }]
+  
   }
   transporter.sendMail( mailoptions , (error, info)=>{
     if (error) {	console.log(error);resolve({status:0,reason:messages.MSG_UNKNOWN_ERR });return false  }

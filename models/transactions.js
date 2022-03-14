@@ -92,6 +92,19 @@ module.exports = function(sequelize, DataTypes) {
     nettype: {
       type: DataTypes.STRING(20),
       allowNull: true
+    },
+    titlename: {
+      type: DataTypes.STRING(80),
+      allowNull: true
+    },
+    amount: {
+      type: DataTypes.STRING(40),
+      allowNull: true
+    },
+    active: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 1
     }
   }, {
     sequelize,

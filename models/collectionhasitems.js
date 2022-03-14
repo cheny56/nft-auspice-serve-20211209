@@ -29,6 +29,10 @@ module.exports = function(sequelize, DataTypes) {
     collectionuuid: {
       type: DataTypes.STRING(80),
       allowNull: true
+    },
+    uuid: {
+      type: DataTypes.STRING(50),
+      allowNull: true
     }
   }, {
     sequelize,

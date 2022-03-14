@@ -1,0 +1,28 @@
+
+users02;
+| username            | varchar(80)      | YES  |     | NULL                |                               |
+| countsales          | int(10) unsigned | YES  |     | 0                   |                               |
+| countbuys           | int(10) unsigned | YES  |     | 0                   |                               |
+| sumsales            | varchar(20)      | YES  |     | 0                   |                               |
+| sumsalesfloat       | float            | YES  |     | 0                   |                               |
+| maxstrikeprice      | varchar(20)      | YES  |     | 0                   |                               |
+| maxstrikepricefloat | float            | YES  |     | 0                   |                               |
+| sumbuys             | varchar(20)      | YES  |     | 0                   |                               |
+| sumbuysfloat        | float            | YES  |     | 0                   |                               |
+| nickname            | varchar(6
+
+	let { itemid
+		, tokenid
+		, amount
+		, price
+		, username
+		, seller
+		, buyer
+		, matcher_contract
+		, token_repo_contract
+		, adminfee // {address : '',amount:'',rate:''}
+		, refererfee // {address : '',amount:'',rate:''}
+		, authorfee // {address : '',amount:'',rate:''}
+		, sellorderuuid
+		, nettype
+

@@ -64,6 +64,11 @@ module.exports = function(sequelize, DataTypes) {
     nickname: {
       type: DataTypes.STRING(60),
       allowNull: true
+    },
+    active: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 1
     }
   }, {
     sequelize,

@@ -33,6 +33,10 @@ module.exports = function(sequelize, DataTypes) {
     objectid: {
       type: DataTypes.STRING(100),
       allowNull: true
+    },
+    nickname: {
+      type: DataTypes.STRING(80),
+      allowNull: true
     }
   }, {
     sequelize,

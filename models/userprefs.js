@@ -31,7 +31,8 @@ module.exports = function(sequelize, DataTypes) {
     },
     active: {
       type: DataTypes.INTEGER(4),
-      allowNull: true
+      allowNull: true,
+      defaultValue: 1
     }
   }, {
     sequelize,

@@ -26,15 +26,15 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.STRING(80),
       allowNull: true
     },
-    asset_contract_offer: {
+    asset_contract_bid: {
       type: DataTypes.STRING(80),
       allowNull: true
     },
-    asset_id_offer: {
+    asset_id_bid: {
       type: DataTypes.BIGINT,
       allowNull: true
     },
-    asset_amount_offer: {
+    asset_amount_bid: {
       type: DataTypes.STRING(20),
       allowNull: true
     },
@@ -59,11 +59,11 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: true
     },
     sig_r: {
-      type: DataTypes.STRING(60),
+      type: DataTypes.STRING(80),
       allowNull: true
     },
     sig_s: {
-      type: DataTypes.STRING(60),
+      type: DataTypes.STRING(80),
       allowNull: true
     },
     sig_v: {
@@ -97,12 +97,63 @@ module.exports = function(sequelize, DataTypes) {
     supertype: {
       type: DataTypes.INTEGER(4),
       allowNull: true,
-      comment: '1: sell, 2:buy'
+      comment: 'sell:1, buy:2'
     },
     supertypestr: {
       type: DataTypes.STRING(20),
       allowNull: true,
       comment: '1: sell, 2:buy'
+    },
+    rawdatahash: {
+      type: DataTypes.STRING(80),
+      allowNull: true
+    },
+    signaturestr: {
+      type: DataTypes.STRING(200),
+      allowNull: true
+    },
+    isprivate: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 0
+    },
+    privateaddress: {
+      type: DataTypes.STRING(80),
+      allowNull: true
+    },
+    price: {
+      type: DataTypes.STRING(20),
+      allowNull: true
+    },
+    expiry: {
+      type: DataTypes.BIGINT,
+      allowNull: true
+    },
+    expirychar: {
+      type: DataTypes.STRING(30),
+      allowNull: true
+    },
+    tokenid: {
+      type: DataTypes.BIGINT,
+      allowNull: true
+    },
+    active: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 1
+    },
+    startingtime: {
+      type: DataTypes.BIGINT,
+      allowNull: true
+    },
+    priceunitname: {
+      type: DataTypes.STRING(40),
+      allowNull: true
+    },
+    ishidden: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 0
     }
   }, {
     sequelize,

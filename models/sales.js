@@ -73,6 +73,15 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: true,
       defaultValue: 0,
       comment: '0:public,1:private'
+    },
+    isprivate: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 0
+    },
+    privateaddress: {
+      type: DataTypes.STRING(80),
+      allowNull: true
     }
   }, {
     sequelize,

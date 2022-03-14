@@ -39,7 +39,7 @@ const MAP_ORDER_BY_VALUES={
   , DESC:1
   , desc:1
 }
-// queryitemdata_filter }=require('../utils/db-custom')
+// query itemdata_filter }=require('../utils/db-custom')
 
 /** router.get('/:username/:offset/:limit', (req,res)=>{
 	let { username , offset , limit }=req.params
