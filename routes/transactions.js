@@ -457,61 +457,85 @@ router.post('/:txhash/:address', async ( req, res )=> {
 	//})
 })
 
-router.get('/history/', async ( req, res )=> {	
-	let username=getusernamefromsession ( req)
-	if ( username ) {}
-	else {resperr( res, messages.MSG_PLEASELOGIN);return  }
-	jfilter = {[Op.or]:[
-		{seller: username},
-		{username: username}
-		]
-	}
+router.get('/history/', async ( req, res )=> {
+	let {username} = req.query;
+	console.log(req.query)
+	// if (!username){
+	// 	username=getusernamefromsession (req)
+	// }
+	//if ( username ) {}
+	//else {resperr( res, messages.MSG_PLEASELOGIN);return  }
 	
 	db['transactions'].findAll({
-		where: {...jfilter}
+		where: {[Op.or]:[
+			{seller: username},
+			{username: username}
+			]}
+		,include:[{
+			model: db['users'],
+			as: 'seller_info'
+		},
+		{model: db['users'],
+		as: 'buyer_info'
+	},
+	{
+		model: db['items'],
+		as: 'item_info'
+	}
+	
+	]
 
 		, order:[['id', 'DESC']]
 	})
 	.then(resp=>{
-		//console.log(resp)
-		let transactionsList = {}
-		let aaproms =[]
-		resp.map(async (transaction)=>{
-			let aproms=[]
-			if(transaction.itemid){}else{return;}
-			aaproms[aaproms.length] = new Promise((resolve, reject)=>{
-				findone('items', {itemid: transaction.itemid})
-				.then((resp)=>{
-					aproms[aproms.length] = resp
-					aproms[aproms.length] = findone('users', {username:transaction.buyer}, ['pw', 'pwhash', 'emailverified', 'emailverifiedtimeunix', 'icanmint', 'agreereceivepromo'])
-					aproms[aproms.length] = findone('users', {username:transaction.seller}, ['pw', 'pwhash', 'emailverified', 'emailverifiedtimeunix', 'icanmint', 'agreereceivepromo'])
+		console.log(JSON.stringify(resp))
+		respok(res, null, null, {list: resp})
+		// //console.log(resp)
+		// let transactionsList = {}
+		// let aaproms =[]
+		// resp.map(async (transaction)=>{
+		// 	let aproms=[]
+		// 	if(transaction.itemid){}else{return;}
+		// 	aaproms[aaproms.length] = new Promise((resolve, reject)=>{
+		// 		findone('items', {itemid: transaction.itemid})
+		// 		.then((resp)=>{
+		// 			aproms[aproms.length] = resp
+		// 			aproms[aproms.length] = findone('users', {username:transaction.buyer}, ['pw', 'pwhash', 'emailverified', 'emailverifiedtimeunix', 'icanmint', 'agreereceivepromo'])
+		// 			aproms[aproms.length] = findone('users', {username:transaction.seller}, ['pw', 'pwhash', 'emailverified', 'emailverifiedtimeunix', 'icanmint', 'agreereceivepromo'])
 					
-					Promise.all(aproms)
-					.then((aresps)=>{
-						resolve({
-							transaction,
-							item: aresps[0],
-							buyerInfo: aresps[1],
-							sellerInfo: aresps[2]
-						})
-					})
-				})
+		// 			Promise.all(aproms)
+		// 			.then((aresps)=>{
+		// 				resolve({
+		// 					transaction,
+		// 					item: aresps[0],
+		// 					buyerInfo: aresps[1],
+		// 					sellerInfo: aresps[2]
+		// 				})
+		// 			})
+		// 		})
 
-			})
-			//let itemInfo = await findone('items', {itemid: transaction.itemid})
-			//transactionsList={...resp, itemInfo}
-		})
+		// 	})
+		// })
 
-		Promise.all(aaproms)
-		.then((list)=>{
-			console.log(...list)
-			respok(res, null, null, {payload: [...list]})
-		})
+		// Promise.all(aaproms)
+		// .then((list)=>{
+		// 	console.log(...list)
+		// 	respok(res, null, null, {payload: [...list]})
+		// })
 		
 
 		
 	}) // dealing transactions
 }) // router
+
+router.get('/history/all', async ( req, res )=> {
+	Promise.all([
+		db['orders'].findAll({}),
+		db['logorders'].findAll({}),
+		db['bids'].findAll({}),
+		db['logbids'].findAll({})
+	])
+})
 
 
 module.exports = router

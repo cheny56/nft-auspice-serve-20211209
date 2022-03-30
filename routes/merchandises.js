@@ -100,7 +100,6 @@ router.get( '/:filterkey/:orderkey/:offset/:limit' ,async (req,res)=>{ LOGGER(''
 			let found_all = arrfieldvalues.find( elem=>elem.match( /^all$/i ) )
 			if ( found_all ) {}
 			else { 
-				//console.log(categorystr + " : " + arrfieldvalues)
 				jfilter = expand_fieldval_matches ( 'categorystr' , arrfieldvalues )
 			}
 		}
@@ -134,8 +133,7 @@ const MAP_SEARCH_FIELDS=['titlename','description','author']
 				]
     }
 		jfilter= { ... jfilter, ... jfilter_02 } 
-console.log(jfilter)	
-console.log(jfilter_02)
+
 }
 	else {}
 	if ( salestatus ) {
@@ -151,7 +149,6 @@ console.log(jfilter_02)
 			jdata[`salestatus${exponent}`] = { [Op.eq] : 1 }
 //			arrfields.push ( jdata )
 		}
- LOGGER('',arrfields)
 		if ( arrfields.length){		// jfilter_01 [ [ Op.or] ] = arrfields
 			jfilter= { ... jfilter , [Op.or] : arrfields }
 		}

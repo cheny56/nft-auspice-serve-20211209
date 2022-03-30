@@ -87,8 +87,4 @@ module.exports = function(sequelize, DataTypes) {
     sequelize,
     tableName: 'itembalances'
   });
-
-  // itembalances.associate = function (models) {
-  //   itembalances.hasOne(models.items, {foreignKey: 'item_id', sourceKey:'itemid'})
-  // };
 };

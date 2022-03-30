@@ -13,6 +13,8 @@ const asksrouter = require("./routes/asks");
 const bundlesrouter = require("./routes/bundles");
 const collectionsrouter = require("./routes/collections");
 const contentsrouter = require("./routes/contents");
+const curation = require("./routes/curation");
+const report = require("./routes/report");
 const favoritesrouter = require("./routes/favorites");
 const itemsrouter = require("./routes/items");
 const merchandisesrouter = require("./routes/merchandises");
@@ -87,6 +89,8 @@ app.use("/transactions", transactionsrouter);
 app.use("/users", usersrouter);
 app.use("/admin", adminRouter);
 app.use("/bookmarks", bookmarksrouter);
+app.use("/curation", curation)
+app.use("/report", report)
 // app.use(cors({origin:'*'}));
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

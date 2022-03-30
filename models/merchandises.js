@@ -41,6 +41,11 @@ module.exports = function(sequelize, DataTypes) {
     isonsale: {
       type: DataTypes.INTEGER(4),
       allowNull: true
+    },
+    category: {
+      type: DataTypes.INTEGER(4),
+      allowNull: true,
+      defaultValue: 1
     }
   }, {
     sequelize,

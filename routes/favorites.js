@@ -31,7 +31,7 @@ router.get('/me/:objectid',(req,res)=>{
 // router.get('/:objectid/totalcount',(req,res)=>{
 router.get('/totalcount/:objectid',(req,res)=>{
 	let {objectid}=req.params
-	findone('favorites',{object:objectid}).then(resp=>{
+	findone('favorites',{objectid:objectid}).then(resp=>{
 		if(resp){respok(res,null,null,{respdata:resp['countfavors']})} 
 		else 		{respok(res,null,null,{respdata:0})}
 	})

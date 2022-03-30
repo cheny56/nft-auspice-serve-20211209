@@ -59,7 +59,6 @@ router.get('/info',(req,res)=>{
 router.get('/:type' , async (req,res)=>{ ///:tablename/:fieldname/:fieldval/:offset/:limit/:orderkey/:orderval
 	let {type} =req.params
 	let username=getusernamefromsession(req)
-	console.log(username)
 	jfilter={}
 	let bids=[]
 	if (type=='bids'){
@@ -75,10 +74,8 @@ router.get('/:type' , async (req,res)=>{ ///:tablename/:fieldname/:fieldval/:off
 		}
 	})
 	.then(results=>{
-		console.log(results)
 		let aaproms =[]
 		results.map(async(ress)=>{
-			console.log(ress)
 			let aproms=[]
 			if(ress.itemid){}else{return;}
 			aaproms[aaproms.length] = new Promise((resolve, reject)=>{

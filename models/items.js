@@ -1,11 +1,7 @@
 /* jshint indent: 2 */
 
 module.exports = function(sequelize, DataTypes) {
-
- 
-
-  
-  const items = sequelize.define('items', {
+  return sequelize.define('items', {
     id: {
       autoIncrement: true,
       type: DataTypes.INTEGER(10).UNSIGNED,
@@ -232,10 +228,4 @@ module.exports = function(sequelize, DataTypes) {
     sequelize,
     tableName: 'items'
   });
-
-  // items.associate = function (models) {
-  //   items.belongsTo(models.itembalances, {foreignKey: 'item_id', sourceKey: 'itemid'});
-  // };
-
-  return items;
 };
