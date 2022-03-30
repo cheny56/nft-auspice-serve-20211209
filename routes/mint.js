@@ -44,7 +44,7 @@ const path=require('path')
 const {get_ipfsformatcid_str}=require('../utils/ipfscid')
 const moment=require('moment')
 const geturlfromitemid=itemid=>`${URL_SELF_DEF}/${itemid}/metadata.json`
-const cliredisa=require('async-redis').createClient()
+const cliredisa=require('async-redis').createClient(process.env.REDIS_URL)
 const { NETTYPE } =require('../configs/net')
 const TIME_STR_FORMAT='YYYYMMDDTHHmmss'
 const getfilename=file=>{

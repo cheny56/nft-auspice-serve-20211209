@@ -1,6 +1,6 @@
 var express = require('express');
 var router = express.Router();
-const cliredisa=require('async-redis').createClient()
+const cliredisa=require('async-redis').createClient(process.env.REDIS_URL)
 const {respok , resperr,respreqinvalid  ,resperrwithstatus  }=require('../utils/rest')
 /* GET home page. */
 

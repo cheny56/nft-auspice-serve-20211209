@@ -9,11 +9,31 @@ const config = require( '../configs/dbconfig.json')[env];// ./apiServe // __dirn
 // let config
 const db = {};
 
+// {"host": "localhost",
+// "username": "nftauspice",
+// "password": "JYPhsa2bYdGhcmPgkqB7",
+// "database":"nftauspice",
+// "dialect": "mariadb",
+// "port": "37375"}
+
 let sequelize;
 if (config.use_env_variable) {
-  sequelize = new Sequelize(process.env[config.use_env_variable], { ... config ,   logging: false}    )
+  sequelize = new Sequelize(process.env[config.use_env_variable], { 
+    host: process.env.MARIA_HOST, 
+    username: process.env.MARIA_USERNAME, 
+    password: process.env.MARIA_PASSWORD,
+    database: process.env.MARIA_DB,
+    dialect: process.env.MARIA_DIALECT,
+    port: process.env.MARIA_PORT, 
+    logging: false}    )
 } else {
-	sequelize = new Sequelize(config.database, config.username, config.password, {... config	
+	sequelize = new Sequelize(config.database, config.username, config.password, {
+    host: process.env.MARIA_HOST, 
+    username: process.env.MARIA_USERNAME, 
+    password: process.env.MARIA_PASSWORD,
+    database: process.env.MARIA_DB,
+    dialect: process.env.MARIA_DIALECT,
+    port: process.env.MARIA_PORT	
 		,	dialectOptions: {			timezone: 'Etc/GMT-9'		},		define: {			timestamps: false		},  logging: false	}
 //	,	define: {timestamps: false}
 	)

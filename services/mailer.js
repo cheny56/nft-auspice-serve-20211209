@@ -10,7 +10,7 @@ const { generaterandomstr_charset
 	, generaterandomstr
 	, gettimestr, LOGGER}=require('../utils/common')
 const STR_SERVICE_NAME='Itemverse'
-const cliredisa=require('async-redis').createClient()
+const cliredisa=require('async-redis').createClient(process.env.REDIS_URL)
 const KEYNAME_EMAILCODE='EMAILCODE' // require('../configs/configs')
 const {findall , findone, updateorcreaterow , createrow }=require('../utils/db')
 const {messages} = require('../configs/messages')
@@ -205,7 +205,7 @@ const sendemail_withtimecheck=async toemailaddress=>{return new Promise(async(re
               </span>
               </div>
               <div style="display: table; margin-top: 70px;">
-              <a class="complete" href="${USERSURL}/#/verifyemail?email=${toemailaddress}&verifycode=${token}" style="
+              <a class="complete" href="${process.env.USERS_URL}/#/verifyemail?email=${toemailaddress}&verifycode=${token}" style="
               display: table-cell;
               width: 100%;
               height: 28px;

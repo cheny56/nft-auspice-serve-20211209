@@ -5,6 +5,7 @@
  */
 
 var app = require('../app');
+require('dotenv').config();
 var debug = require('debug')('nft-auspice-20211208:server');
 var http = require('http');
 
@@ -12,6 +13,7 @@ var http = require('http');
  * Get port from environment and store in Express.
  */
 const PORTNUM=32287
+console.log(process.env.PORT)
 var port = normalizePort(process.env.PORT || PORTNUM );
 app.set('port', port);
 const LOGGER=console.log
