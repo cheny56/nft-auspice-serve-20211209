@@ -14,7 +14,7 @@ const cliredisa=require('async-redis').createClient()
 const KEYNAME_EMAILCODE='EMAILCODE' // require('../configs/configs')
 const {findall , findone, updateorcreaterow , createrow }=require('../utils/db')
 const {messages} = require('../configs/messages')
-const {TIMESTRFORMAT}=require('../configs/configs')
+const {TIMESTRFORMAT, USERSURL}=require('../configs/configs')
 const moment=require('moment')
 let MAX_DELAY_CONSECUTIVE_EMAIL_SEND_IN_SECONDS=30
 let MAX_DELAY_CONSECUTIVE_EMAIL_SEND_IN_MILI=30*1000
@@ -88,7 +88,7 @@ const sendemail_customcontents_withtimecheck=async (toemailaddress
   })
 })
 }
-/*** -----------이거임!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*** -----------Sending Mail ----------------------------*/
 const sendemail_withtimecheck=async toemailaddress=>{return new Promise(async(resolve,reject)=>{
   let timenow=moment() // gettimestr()
   //let { cryptoaddress} = jdata 
@@ -112,7 +112,6 @@ const sendemail_withtimecheck=async toemailaddress=>{return new Promise(async(re
       <meta charset="UTF-8" />
       <meta http-equiv="X-UA-Compatible" content="IE=edge" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<<<<<<< HEAD
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
       <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
@@ -206,7 +205,7 @@ const sendemail_withtimecheck=async toemailaddress=>{return new Promise(async(re
               </span>
               </div>
               <div style="display: table; margin-top: 70px;">
-              <a class="complete" href="http://itemverse1.net/#/verifyemail?email=${toemailaddress}&verifycode=${token}" style="
+              <a class="complete" href="${USERSURL}/#/verifyemail?email=${toemailaddress}&verifycode=${token}" style="
               display: table-cell;
               width: 100%;
               height: 28px;
@@ -247,113 +246,6 @@ const sendemail_withtimecheck=async toemailaddress=>{return new Promise(async(re
         path:'services/logo.png',
         cid: 'logoIMG'
       }]
-=======
-      <title>Document</title>
-  
-      <style>
-        .contBox {
-          width: 800px;
-        }
-  
-        * {
-          padding: 0;
-          margin: 0;
-        }
-  
-        header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          height: 40px;
-          padding: 0 20px;
-          font-weight: 600;
-          color: #fff;
-          background: rgb(59, 60, 62);
-        }
-  
-        .sumnailBox {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          height: 120px;
-          margin: 10px 0;
-          font-size: 24px;
-          font-weight: 700;
-          border: 6px solid rgb(82, 174, 234);
-        }
-  
-        .actionBox {
-          display: flex;
-          flex-direction: column;
-          gap: 40px;
-          padding: 4px 10px 40px 10px;
-          border-top: 1px solid rgb(165, 165, 165);
-          border-bottom: 1px solid rgb(165, 165, 165);
-        }
-  
-        .actionBox .textBox {
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-        }
-  
-        .actionBox .endBtn {
-          width: 200px;
-          height: 50px;
-          font-size: 16px;
-          font-weight: 700;
-          color: #fff;
-          background: rgb(82, 174, 234);
-          border: none;
-          border-radius: 10px;
-        }
-  
-        .explainBox {
-          display: flex;
-          align-items: center;
-          height: 160px;
-          padding: 0 10px;
-          font-size: 16px;
-          border-bottom: 2px solid rgb(165, 165, 165);
-        }
-  
-        .copyrightBox {
-          padding: 4px 10px;
-          font-weight: 600;
-        }
-      </style>
-    </head>
-    <body>
-      <header>
-        <p class="logo">AUSPICE</p>
-        <p class="market">NFT MARKET</p>
-      </header>
-  
-      <section class="contBox">
-        <article class="sumnailBox">
-          <p>가입 이메일 인증</p>
-        </article>
-  
-        <article class="actionBox">
-          <div class="textBox">
-            <p>안녕하세요. ITEMVERSE MARKET 입니다.</p>
-            <p>회원의 계정을 확인하기 위해 아래 버튼을 클릭해 주세요.</p>
-            <p>이 링크는 24시간 동안만 유효합니다.</p>
-          </div>
-  
-          <a class="endBtn" style="cursor:pointer" href='http://localhost:3000/#/verifyemail?&email=${toemailaddress}&verifycode=${token}'>가입 완료 하기</a>
-        </article>
-  
-        <article class="explainBox">
-          <p>&#183; 본 메일은 발신전용으로 회신되지 않습니다.</p>
-        </article>
-  
-        <article class="copyrightBox">
-          <p>Copyright &copy; 2021 ITEMVERSE All rights reserved.</p>
-        </article>
-      </section>
-    </body>`
->>>>>>> 1deb4a497327f552045423538c6276d7368b1e57
   
   }
   transporter.sendMail( mailoptions , (error, info)=>{

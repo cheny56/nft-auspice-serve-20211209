@@ -1,4 +1,4 @@
-
+const USERSURL='http://itemverse1.net'
 const CDN_PATH='/var/www/html'
 //	const PRICEUNIT_DEF='ETH'
 //  const PRICEUNIT_DEF='KRW'
@@ -32,5 +32,6 @@ module.exports={
   , B_ENFORCE_NO_DUPLICATE_ITEMID
 	, NAMESPACE_FOR_HASH
 	, MAP_SALESTATUS_STR
+  , USERSURL
 }
 
