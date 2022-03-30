@@ -348,7 +348,6 @@ router.post('/login/crypto1', async(req,res)=>{
   const token=generaterandomstr(TOKENLEN)
   let username=address
   let ipaddress = getipaddress(req)
-
   createrow( 'sessionkeys', {
     username
     , token
