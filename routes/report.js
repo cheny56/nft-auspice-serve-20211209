@@ -238,4 +238,40 @@ router.get("/search/:tablename", async (req, res) => {              ////////////
   }
 });
 
+router.get('/search/item/:id', (req,res)=>{
+  let {id} = req.params;
+  db['reports'].findAll({
+    where:{id},
+    raw:false,
+    nested: true,
+    include:[{
+      model: db['users'],
+      as: 'reporter_info',
+      attributes: [
+        "username",
+        "nickname",
+        "description",
+        "profileimageurl",
+      ],
+      nested: true,
+    }, {
+      model: db['users'],
+      as: 'reportee_info',
+      attributes: [
+        "username",
+        "nickname",
+        "description",
+        "profileimageurl",
+      ],
+      nested: true,
+    },{
+      model: db['items'],
+      as: 'item_info',
+      nested: true,
+    }]
+  }).then((resp)=>{
+    respok(res, null, null, { list: resp });
+  })
+})
+
 module.exports = router;

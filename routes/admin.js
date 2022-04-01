@@ -480,4 +480,64 @@ router.get("/search/:tablename", async (req, res) => {
   }
 });
 
+router.post('/faq/category', (req, res)=>{
+  let {textdisp, lang, state} = req.body
+  db['faqcategories'].create({
+    textdisp,
+    lang,
+    state
+  })
+})
+
+
+router.put('/faq/category',(req,res)=>{
+  let {id, textdisp, lang, state} = req.body
+  db['faqcategories'].update(
+    {
+    textdisp,
+    state
+  },
+  {
+    where:{id}
+  })
+})
+
+router.get('/faq/category/:lang', (req, res)=>{
+  let {lang} = req.params;
+  db['faqcategories'].findAll({
+    where: (lang=='all')?{}:{lang}
+  }).then((resp)=>{
+    respok(res, null, null, {resp})
+  })
+})
+
+router.delete('/faq/category/:id', (req, res)=>{
+  let {id} = req.params;
+  db['faqcategories'].destroy({where:{id}}).then((resp)=>{respok(res, null, null, {resp})})
+})
+
+router.post('/faq/item', (req, res)=>{
+  let {title, description, category, status, lang} = req.body;
+  db['faq'].create({
+    title,
+    description,
+    category,
+    lang,
+    status
+  })
+});
+
+router.put('/faq/item',(req, res)=>{
+
+})
+router.get('/faq/item',(req, res)=>{
+  db['faq'].findAndCountAll({}).then((resp)=>{
+    respok(res, null, null, {list: resp})
+  })
+})
+router.delete('/faq/item',(req, res)=>{
+
+})
+
+
 module.exports = router;
