@@ -1,4 +1,4 @@
-const NETTYPE='KLAYTN-TESTNET'
+const NETTYPE=process.env.NETTYPE
 
 module.exports={
 	NETTYPE

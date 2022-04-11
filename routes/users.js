@@ -81,6 +81,7 @@ router.get('/user/info/:username',(req,res)=>{
 	// if ( username){}
 //	else {resperr(res, messages.MSG_PLEASELOGIN); return }
 	let { username }=req.params
+  console.log(username)
 	let aproms=[]
 	aproms[aproms.length] = findone('users', { username } )  
 	aproms[aproms.length] = findone_mon('users', { username } )
@@ -118,13 +119,13 @@ router.get('/query-value-exists/:fieldname/:value' , (req,res)=>{
 
 
 //-----UPLOAD PROF IMAGE
-router.post('/upload/file' , filehandler.single('file' ),async(req,res)=>{ // /:type0
-  console.log(req.body);
-  console.log('asdfasdfas')
+router.post('/upload/file/:type' , filehandler.single('file'),async(req,res)=>{ // /:type0
   //	res.status(200).send( req )
   //	respok ( res, null, null,{reqcontent:req}) 
   //	return 
-  	let {username}=req.body; 
+  let {type} = req.params;	
+  let {username}=req.body; 
+
     
     //const username=getusernamefromsession(req)
     if(username){}
@@ -138,14 +139,14 @@ router.post('/upload/file' , filehandler.single('file' ),async(req,res)=>{ // /:
     const itemid = await get_ipfsformatcid_file ( fulltmpname ) 
   
   //	const fullpathname=`${PATH_STORE_DEF}/repo/${itemid}`
-    const fullpathname=`/var/www/html/userImage/${username}`
-    const fullpathandfilename=`/var/www/html/userImage/${username}/${filename}`
+    const fullpathname=`/var/www/html/userImage/${username}/${type}`
+    const fullpathandfilename=`/var/www/html/userImage/${username}/${type}/${filename}`
     if (! fs.existsSync( fullpathname ) )	{		shell.mkdir('-p' , fullpathname)	}
     fs.rename( fulltmpname , fullpathandfilename , (err)=>{
       if(err){LOGGER(err); resperr(res,messages.MSG_INTERNALERR); return}
       respok(res,null,null,{
         respdata:fullpathandfilename
-        , payload : {url:`${URL_SELF_DEF}/${username}/${filename}` 
+        , payload : {url:`${URL_SELF_DEF}/${username}/${type}/${filename}` 
           , storage_s3:''
           , storage_ipfs : ''
         }
@@ -171,11 +172,11 @@ router.post ('/join', filehandler.single('file'),async(req,res)=>{
 	aproms[aproms.length ] = findone('users' ,{ username })
   aproms[aproms.length ] = findone('users' ,{ nickname })
 	Promise.all(aproms).then(async resp=>{
-		if( resp[ 0 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {payload : {dupfield: 'address'} }); return
+		if( resp[ 0 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {reason: 'address' }); return
 		} else {}
-		if( resp[ 1 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {payload : {dupfield: 'username'} }); return
+		if( resp[ 1 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {reason: 'username' }); return
 		} else {}
-    if( resp[ 2 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {payload : {dupfield: 'nickname'} }); return
+    if( resp[ 2 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {reason: 'nickname' }); return
 		} else {} 
 		let uuid = v5( username , NAMESPACE )
     console.log(uuid)
@@ -226,7 +227,7 @@ router.post('/update/mail', (req,res)=>{
   if(KEYS(jreqbody).length>0){}
   else {resperr(res,messages.MSG_ARGINVALID);return}
   
-  updaterow('users', {username: req.body.address}, {email: jreqbody.email, address: req.body.address})
+  updaterow('users', {username: req.body.walletAddress}, {email: jreqbody.email, address: req.body.walletAddress})
   .then(result => {
     console.log(result);
  })
@@ -240,9 +241,6 @@ router.get('/check/:username', async (req, res)=>{
   let { username } = req.params
   //console.log(account)
   //const username=account//getusernamefromsession(req);
-  console.log("USERNAMEEEEEEEE"+username)
-  //console.log("BODY======"+req.body.account)
-  console.log("TOKEEEEEEEEN"+req.headers?.token)
   if(req.headers?.token){} 
 	if(username){
     let myinfo_mongo = await findone_mon('users' , {username} )
@@ -296,7 +294,6 @@ router.post('/login/crypto', async(req, res)=>{
   let aproms=[]
 	aproms[aproms.length ] = await findone('users', { username: address })
 	Promise.all(aproms).then(async resp=>{
-    console.log("WHERE USERNAME IS"+address+"AND THE RESPOND IS"+resp)
 		if( resp[ 0 ] ){
       if (resp[0].emailverified == 1){
         const token=generaterandomstr(TOKENLEN)
@@ -351,7 +348,6 @@ router.post('/login/crypto1', async(req,res)=>{
   const token=generaterandomstr(TOKENLEN)
   let username=address
   let ipaddress = getipaddress(req)
-
   createrow( 'sessionkeys', {
     username
     , token

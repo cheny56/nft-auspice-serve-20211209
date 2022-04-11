@@ -26,7 +26,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: true
     },
     contentbody: {
-      type: DataTypes.STRING(1000),
+      type: 'LONGTEXT',
       allowNull: true
     },
     writer: {
@@ -42,6 +42,20 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.INTEGER(4),
       allowNull: true,
       defaultValue: 1
+    },
+    lang: {
+      type: DataTypes.STRING(5),
+      allowNull: true
+    },
+    isPopup: {
+      type: DataTypes.INTEGER(1),
+      allowNull: false,
+      defaultValue: 0
+    },
+    locked: {
+      type: DataTypes.INTEGER(1),
+      allowNull: false,
+      defaultValue: 0
     }
   }, {
     sequelize,

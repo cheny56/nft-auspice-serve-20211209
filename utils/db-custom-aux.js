@@ -4,7 +4,7 @@ const {findone , findall , countrows_scalar
 	, findall_select_columns
 }=require('../utils/db')
 const db=require('../models')
-const cliredisa=require('async-redis').createClient()
+const cliredisa=require('async-redis').createClient(process.env.REDIS_URL)
 const queryitemdata=async (itemid ) =>{
   let aproms=[]
   return new Promise(async(resolve,reject)=>{

@@ -2,8 +2,9 @@
   "development": { 
 		"host": "localhost",
 		"username": "nftauspice",
-		"password": "JYPhsa2bYdGhcmPgkqB7"
-		, "database":"nftauspice"
-		, "dialect": "mariadb"
+		"password": "JYPhsa2bYdGhcmPgkqB7",
+		"database":"nftauspice",
+		"dialect": "mariadb",
+		"port": "37375"
 	}
 }

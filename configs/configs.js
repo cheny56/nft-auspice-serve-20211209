@@ -1,4 +1,3 @@
-
 const CDN_PATH='/var/www/html'
 //	const PRICEUNIT_DEF='ETH'
 //  const PRICEUNIT_DEF='KRW'

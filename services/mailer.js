@@ -10,11 +10,11 @@ const { generaterandomstr_charset
 	, generaterandomstr
 	, gettimestr, LOGGER}=require('../utils/common')
 const STR_SERVICE_NAME='Itemverse'
-const cliredisa=require('async-redis').createClient()
+const cliredisa=require('async-redis').createClient(process.env.REDIS_URL)
 const KEYNAME_EMAILCODE='EMAILCODE' // require('../configs/configs')
 const {findall , findone, updateorcreaterow , createrow }=require('../utils/db')
 const {messages} = require('../configs/messages')
-const {TIMESTRFORMAT}=require('../configs/configs')
+const {TIMESTRFORMAT, USERSURL}=require('../configs/configs')
 const moment=require('moment')
 let MAX_DELAY_CONSECUTIVE_EMAIL_SEND_IN_SECONDS=30
 let MAX_DELAY_CONSECUTIVE_EMAIL_SEND_IN_MILI=30*1000
@@ -88,7 +88,7 @@ const sendemail_customcontents_withtimecheck=async (toemailaddress
   })
 })
 }
-/*** -----------이거임!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+/*** -----------Sending Mail ----------------------------*/
 const sendemail_withtimecheck=async toemailaddress=>{return new Promise(async(resolve,reject)=>{
   let timenow=moment() // gettimestr()
   //let { cryptoaddress} = jdata 
@@ -205,7 +205,7 @@ const sendemail_withtimecheck=async toemailaddress=>{return new Promise(async(re
               </span>
               </div>
               <div style="display: table; margin-top: 70px;">
-              <a class="complete" href="http://itemverse1.net/#/verifyemail?email=${toemailaddress}&verifycode=${token}" style="
+              <a class="complete" href="${process.env.USERS_URL}/#/verifyemail?email=${toemailaddress}&verifycode=${token}" style="
               display: table-cell;
               width: 100%;
               height: 28px;
