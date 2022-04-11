@@ -31,7 +31,8 @@ const multer=require('multer')
 let {storefile_from_base64data
 	, compose_filename
 	, compose_url  
-}=require('../utils/files')
+}=require('../utils/files');
+const {createorupdaterow, createifnoneexistent} = require('../utils/db')
 const getfilename=file=>{
   const ext=path.extname(file.originalname);
 	return `${moment().unix()}-${generaterandomstr(6)}${ext}`
@@ -103,6 +104,66 @@ router.get('/mailaddr/:walletaddress', (req, res)=>{
 
 })
 
+router.get('/push', (req, res)=>{
+  let username=getusernamefromsession(req)
+  if(username==undefined){return;}
+  db['pushalarm'].findAndCountAll({
+    where:{username},
+    include:[{
+      model: db['items'],
+      as: 'push_item'
+    }],
+    distinct: true
+  }).then((resp)=>{
+    respok(res, null, null, {pushes:resp})
+  })
+})
+
+router.put('/update', (req, res)=>{
+  let username=getusernamefromsession(req)
+  let {target, val} = req.body;
+  console.log('UPDATE :::::::'+username)
+  console.log(target, val)
+  db['users'].update({
+    [target]: val
+  },{
+    where: {username}
+  }).then((resp)=>{respok(res, 'changed', {resp})})
+})
+
+router.delete('/push/:id', (req, res)=>{
+  let {id} = req.params;
+  //let username=getusernamefromsession(req)
+  let username = null;
+  db['pushalarm'].destroy({where:{
+    id
+  }}).then((resp)=>{
+    respok(res, null, null, {deleted: resp})
+  })
+})
+
+router.put('/notifications', async (req, res)=>{
+  let {sales, newbid, expire, exceed, referral, klay, usd} = req.body;
+  let username = getusernamefromsession(req)
+  //db['notificationsettings'].
+  let resp = await createorupdaterow('notificationsettings', {username}, {sales, newbid, expire, exceed, referral, klay, usd});
+  respok(res, null, null, {resp})
+  
+})
+
+router.get('/notifications', async (req, res)=>{
+  //let {sales, newbid, expire, exceed, referral, klay, usd} = req.body;
+  let username = getusernamefromsession(req)
+  //db['notificationsettings'].
+  //createifnoneexistent('notificationsettings', {username}, {klay:0, usd:0});
+
+  db['notificationsettings'].findOne({where:{username}}).then((resp)=>{
+    respok(res, null, null, {resp})
+  })
+  
+  
+})
+
 router.get('/query-value-exists/:fieldname/:value' , (req,res)=>{
 	let { fieldname , value } = req.params
 	fieldexists('users' , fieldname).then(resp=>{
@@ -168,16 +229,18 @@ router.post ('/join', filehandler.single('file'),async(req,res)=>{
 	if (username && email && nickname ){}
 	else {resperr(res, messages.MSG_ARGMISSING); return }
 	let aproms=[]
-	aproms[aproms.length ] = findone('users', { address })
 	aproms[aproms.length ] = findone('users' ,{ username })
   aproms[aproms.length ] = findone('users' ,{ nickname })
+
+  //Check if email exists 
+	//aproms[aproms.length ] = findone('users', { email }) 
 	Promise.all(aproms).then(async resp=>{
-		if( resp[ 0 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {reason: 'address' }); return
+		if( resp[ 0 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {reason: 'username' }); return
 		} else {}
-		if( resp[ 1 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {reason: 'username' }); return
+		if( resp[ 1 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {reason: 'nickname' }); return
 		} else {}
-    if( resp[ 2 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {reason: 'nickname' }); return
-		} else {} 
+    // if( resp[ 2 ] ){			resperr(res,messages.MSG_DATADUPLICATE , null , {reason: 'nickname' }); return
+		// } else {} 
 		let uuid = v5( username , NAMESPACE )
     console.log(uuid)
     /* Disable creating account on registering.*/
@@ -190,7 +253,7 @@ router.post ('/join', filehandler.single('file'),async(req,res)=>{
 }) 
 //----------------------------
 
-//----- SEND AN ACCOUNT VEmmmmmmm-um-um-um-um-um-u¨¨¨¨¨¨ˆø\RIFICATION MAIL
+//----- SEND AN ACCOUNT VERIFICATION MAIL
 router.get('/email/verifycode/:emailaddress',(req,res)=>{
   const {emailaddress}=req.params
   if(validateemail(emailaddress)){} else {resperr(res,messages.MSG_ARGINVALID );return}
@@ -243,11 +306,12 @@ router.get('/check/:username', async (req, res)=>{
   //const username=account//getusernamefromsession(req);
   if(req.headers?.token){} 
 	if(username){
-    let myinfo_mongo = await findone_mon('users' , {username} )
+    //let myinfo_mongo = await findone_mon('users' , {username} )
 		let myinfo_maria = await findone ('users' , {username} )
     db['sessionkeys'].findOne({where:{username, token: req.headers?.token}}).then((resp)=>{
       if(resp){respok(res ,null,null,{
-        payload : "GOODTOGO"})
+        payload : "GOODTOGO",
+      list: myinfo_maria})
     }else{
       resperr(res,messages.MSG_SESSIONEXPIRED)
     }
@@ -284,6 +348,13 @@ router.put('/user/myinfo',(req,res)=>{
   })
 })
 
+router.get('/login/secure/crypto/:address', async(req, res)=>{
+  let {address} = req.params;
+  if (!address) {resperr(res, 'noaddress');return;}
+  let uuid = v5( address+moment() , NAMESPACE )
+  respok(res, 'nonce', uuid);
+
+})
 
 router.post('/login/crypto', async(req, res)=>{
   const {address , cryptotype }=req.body
@@ -348,6 +419,7 @@ router.post('/login/crypto1', async(req,res)=>{
   const token=generaterandomstr(TOKENLEN)
   let username=address
   let ipaddress = getipaddress(req)
+
   createrow( 'sessionkeys', {
     username
     , token

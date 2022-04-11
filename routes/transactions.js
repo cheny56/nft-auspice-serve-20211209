@@ -97,7 +97,28 @@ router.post('/report/auction/english/bid/:txhash' , async(req,res)=>{
 		let uuid=create_uuid_via_namespace( txhash) //  uuidv4()
 		if ( aprevbids && aprevbids.length) { 
 			aprevbids.forEach (async elem=>{
-				await moverow( 'bids' , { id:elem.id } , 'logbids', { outbidderuuid : uuid , active : 0}  ) 
+				await moverow( 'bids' , { id:elem.id } , 'logbids', { outbidderuuid : uuid , active : 0}  )
+				await db['notificationsettings'].findOne({
+					where: {
+						username: username
+					},
+					attributes:['exceed']
+				}).then(async (resp)=>{
+					if(resp.exceed==1){
+						await createrow('pushalarm', {username: elem.username, itemid: elem.itemid, type: 3})
+					}
+				})
+				await db['notificationsettings'].findOne({
+					where: {
+						username: seller
+					},
+					attributes:['newbid']
+				}).then(async (resp)=>{
+					if(resp.newbid==1){
+						await createrow('pushalarm', {username: elem.seller, itemid: elem.itemid, type: 1})
+					}
+				})
+				
 			})
 		}
 		await createrow ( 'bids', {	txhash
@@ -190,6 +211,17 @@ router.post('/report/sale/close/:txhash' , async(req,res)=>{
 		, 'logorders'
 		, { closingtxhash : txhash , buyer,seller } 
 	) // (fromtable, jfilter, totable , auxdata)
+	await db['notificationsettings'].findOne({
+		where: {
+			username: seller
+		},
+		attributes:['sales']
+	}).then(async (resp)=>{
+		if(resp.sales==1){
+			await createrow('pushalarm', {username: seller, itemid: itemid, type: 0})
+		}
+	})
+	
 
 	createrow ( 'logactions', {
 		username
@@ -231,6 +263,7 @@ router.post('/report/sale/close/:txhash' , async(req,res)=>{
 			, subtypestr : 'SALE-SPOT'
 		})
 	}
+	
 	{	let {address,amount,rate} = authorfee
 		await createrow ( 'logfeepayouts' , {
 			receiver : address
@@ -245,10 +278,23 @@ router.post('/report/sale/close/:txhash' , async(req,res)=>{
 			, txhash
 			, receiverrolestr : 'AUTHOR'
 		})	
+		await db['notificationsettings'].findOne({
+			where: {
+				username: seller
+			},
+			attributes:['referral']
+		}).then(async (resp)=>{
+			if(resp.referral==1){
+				await createrow('pushalarm', {username: seller, itemid: itemid, type: 4, content: amount})
+			}
+		})
 	}
+	
 	{ if (refererfee){}
 		else {return }
 		let {address,amount,rate}=refererfee
+		
+		//await createrow('pushalarm', {username: address, itemid: elem.itemid, type: 4, content: amount})
 		createrow ( 'logfeepayouts' , {
 			receiver : address
 			, contract : matcher_contract

@@ -4,7 +4,7 @@ const {findone , findall , countrows_scalar
 	, updaterow
 	, incrementroworcreate 
  }=require('../utils/db')
-const cliredisa=require('async-redis').createClient(process.env.REDIS_URL)
+const cliredisa=require('async-redis').createClient()
 const { ISFINITE } =require('../utils/common' )
 
 const get_klay_usdt_ticker=async _=>{

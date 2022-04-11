@@ -7,9 +7,11 @@ const {
   updaterow,
   countrows_scalar,
   fieldexists,
+  createorupdaterow
 } = require("../utils/db");
 const {
   LOGGER,
+  ISFINITE,
   KEYS,
   generaterandomstr,
   generaterandomstr_charset,
@@ -38,7 +40,7 @@ const {
 } = require("../utils/dbmon");
 const TOKENLEN = 48;
 let { v5: uuidv5 } = require("uuid");
-
+let {Op} = db.Sequelize;
 /* GET users listing. */
 // router.get('/', function(req, res, next) {  res.send('respond with a resource');});
 const MAP_FIELDS_ALLOWED_TO_CHANGE = {
@@ -64,10 +66,18 @@ const createnicks_3letter_ver = (_) => {
 };
 const WAValidator = require("multicoin-address-validator");
 const STRINGER = JSON.stringify;
+const NAMESPACE = Uint8Array.from([
+  0xDE, 0x42, 0xF6, 0xFF,
+  0x21, 0x0C,
+  0xDA, 0x9C,
+  0xA3, 0x0E,
+  0x1A, 0x4A, 0xC2, 0x74, 0x36, 0x56,
+]);
 
 //FILEUPLOAD
 const fs = require('fs');
-const multer = require('multer')
+const multer = require('multer');
+const { sequelize } = require("../models");
 const getfilename=file=>{
   const ext=path.extname(file.originalname);
 	return `${moment().unix()}-${generaterandomstr(6)}${ext}`
@@ -84,6 +94,54 @@ const filehandler=multer({
 
 //router.
 //FILEUPLOAD
+
+router.post ('/join',async(req,res)=>{
+	let {
+		username
+    , nickname
+		, email
+    , pw
+    , pwhash
+    , level
+    , phone
+    ,id
+	}=req.body
+	if (username && pw && pwhash){}
+	else {resperr(res, messages.MSG_ARGMISSING); return }
+	let aproms=[]
+
+  if(id){
+      db['adminusers'].update({
+        ...req.body
+      },{where:{
+        id
+      }}).then((resp)=>{
+        respok(res, null, null)
+      })
+    }
+  else{
+      //resperr(res,messages.MSG_DATADUPLICATE , null , {reason: 'username' }); return
+		let uuid = uuidv5( username , NAMESPACE )
+    console.log(uuid)
+    /* Disable creating account on registering.*/
+		let resp_create = await createorupdaterow('adminusers', {username}, {... req.body , uuid })//await createrow ('adminusers' , {... req.body , uuid } )
+    
+		respok ( res , null , null , { payload : { uuid }} )
+  }
+
+})
+
+router.get('/list', (req,res)=>{
+  db['adminusers'].findAll({
+  }).then((resp)=>{
+    respok(res, null, null, {list: resp})
+  })
+})
+
+router.delete('/account/:id', (req, res)=>{
+  let {id} = req.params;
+  db['adminusers'].destroy({where:{id }}).then((resp)=>respok(res, null, null))
+})
 
 router.post("/login", (req, res) => {
   const { account, hashpassword } = req.body;
@@ -103,7 +161,7 @@ router.post("/login", (req, res) => {
     //let  jfitler = {}
     //jfilter [ fieldnamn ]  = fieldval
 
-    findone("adminusers", { username: account }).then((resp) => {
+    findone("adminusers", { username: account, pwhash: hashpassword }).then((resp) => {
       if (resp) {
       } else {
         resperr(res, messages.MSG_DATANOTFOUND);
@@ -113,15 +171,34 @@ router.post("/login", (req, res) => {
       const token = generaterandomstr(TOKENLEN);
       let ipaddress = getipaddress(req);
       createrow("sessionkeys", {
-        account,
+        username: account,
         token,
         useragent: getuseragent(req),
         ipaddress,
       }).then(async (resp) => {
-        respok(res, null, null, { payload: token, data: ddata });
+        respok(res, null, null, { account: account, payload: token, data: ddata });
       });
     });
   });
+});
+
+router.delete('/logout/:account/:token', (req, res)=>{
+  let {account, token} = req.params;
+  db['sessionkeys'].destroy({where:{username: account, token }}).then((resp)=>respok(res, null, null))
+})
+
+router.get("/login/:account/:token", (req, res) => {
+  //CHECK LOGIN
+  let {account, token} = req.params;
+  //const { account, hashpassword } = req.body;
+  let lvl = 0;
+  //LOGGER("ADMIN_LOGIN", req.body);
+  db['sessionkeys'].findOne({where:{
+    username: account,
+    token: token
+  }}).then((resp)=>{
+    respok(res, null, null, {resp})
+  })
 });
 
 router.post("/curation/create/:type", (req, res) => {
@@ -539,5 +616,154 @@ router.delete('/faq/item',(req, res)=>{
 
 })
 
+router.get('/ticket', (req, res)=>{
+  let jfilter={}
+  let {filterkey, filterval} = req.body;
+  if (filterkey && filterval){
+    jfilter[filterkey] = filterval;
+  }
+  db['supporttickets'].findAndCountAll({
+    where:{
+      ...jfilter
+    },
+    include:[{
+      model: db['users'],
+      as: 'requester_info',
+      attributes:[
+        'nickname'
+      ]
+    }]
+  }).then((resp)=>{
+    respok(res, null, null, {list: resp})
+  })
+})
+
+router.get('/userinfo/:username/:type/:offset/:limit', async (req, res)=>{
+  let {username, type, offset, limit} = req.params;
+  if (!username){resperr(res, 'NO-ARG-USERNAME');return;}
+  offset = +offset;
+      limit = +limit;
+      if (ISFINITE(offset) && offset >= 0 && ISFINITE(limit) && limit >= 1) {
+      } else {
+        resperr(res, messages.MSG_ARGINVALID, null, {
+          payload: { reason: "offset-or-limit-invalid" },
+        });
+        return;
+      }
+      console.log(offset+" : "+limit)
+  if(type=="all"){
+    //const count_items = 
+    db['users'].findAndCountAll({
+      raw: false,
+      nested: true,
+
+      attributes:['createdat', 'username', 'nickname', 'profileimageurl', 'description', 'email' ,'coverimageurl'],
+      include:[{
+        model: db['items'],
+        as: 'owned_items',
+        attributes: ['id']
+      }],
+      distinct: true,
+      offset, 
+      limit,
+      //nest: true,
+      //raw: true,
+    }).then((resp)=>{
+      respok(res, null, null, {resp})
+    })
+  }
+  if(type=="general"){
+    //const count_items = 
+    db['users'].findOne({
+      where:{username},
+      attributes:['createdat', 'username', 'nickname', 'profileimageurl', 'description', 'email' ,'coverimageurl',[sequelize.fn('COUNT', sequelize.col('item.id')), "itemscount"]],
+      include: [{
+        model: db['items']
+        ,attributes:[]
+      }],
+    }).then((resp)=>{
+      respok(res, null, null, {resp})
+    })
+  }
+  if(type=="buy"){
+    db['logorders'].findAndCountAll({
+      where:{buyer: username},
+      include:[{
+        model: db['users'],
+        as: 'buyer_logorder_info',
+        attributes: ['nickname']
+      },{
+        model: db['users'],
+        as: 'seller_logorder_info',
+        attributes: ['nickname']
+      },{
+        model: db['items'],
+        as: 'item_logorder_info',
+      },],
+      offset,
+      limit
+    }).then((resp)=>{
+      respok(res, null, null, {resp})
+    })
+  }
+  if(type=="sale"){
+    db['logorders'].findAndCountAll({
+      where:{seller: username},
+      include:[{
+        model: db['users'],
+        as: 'buyer_logorder_info',
+        attributes: ['nickname']
+      },{
+        model: db['users'],
+        as: 'seller_logorder_info',
+        attributes: ['nickname']
+      },{
+        model: db['items'],
+        as: 'item_logorder_info',
+      },],
+      offset,
+      limit
+    }).then((resp)=>{
+      respok(res, null, null, {resp})
+    })
+  }
+  if(type=='items'){
+    db['itembalances'].findAndCountAll({
+      where:{username},
+      include:[{
+        model: db['users'],
+        as: 'owner_info',
+      },{
+        model: db['items'],
+        as: 'balance_item_info'
+      }]
+    }).then((resp)=>{
+      respok(res, null, null, {resp})
+    })
+  }
+  if(type=="activity"){
+    var query = await sequelize.query("SELECT orders.id, orders.createdat, orders.username, orders.itemid, 6 as type, username as 'from', NULL as 'to', items.titlename as 'itemname', items.priceunit as 'unit', orders.price as 'price', NULL as 'txhash' FROM orders LEFT JOIN items ON orders.itemid = items.itemid WHERE username='"+username+"' UNION ALL SELECT logorders.id, logorders.createdat, logorders.username, logorders.itemid, 4 as type , buyer as 'from', seller as 'to', items.titlename as 'itemname', items.priceunit as 'unit', logorders.price as 'price', logorders.closingtxhash as 'txhash' FROM logorders LEFT JOIN items ON logorders.itemid = items.itemid WHERE buyer='"+username+"' OR seller='"+username+"' UNION ALL SELECT bids.id, bids.createdat, bids.username, bids.itemid, 3 as type , bidder as 'from', seller as 'to', items.titlename as 'itemname', items.priceunit as 'unit', bids.price as 'price', bids.txhash as 'txhash' FROM bids LEFT JOIN items ON bids.itemid = items.itemid WHERE bidder='"+username+"' OR seller='"+username+"' ORDER BY createdat LIMIT 50;", { type: sequelize.QueryTypes.SELECT });
+    respok(res, null, null, {query})
+  
+  }
+  if(type=="fav"){
+    db['logfavorites'].findAndCountAll({
+      where:{username},
+      include:[{
+        model: db['users'],
+        as: 'liker_info',
+      },{
+        model: db['items'],
+        as: 'liked_item_info',
+        include:[{
+          model: db['users'],
+          as: 'author_info'
+        }]
+      }]
+    }).then((resp)=>{
+      respok(res, null, null, {resp})
+    })
+  }
+})
 
 module.exports = router;

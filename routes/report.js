@@ -268,9 +268,49 @@ router.get('/search/item/:id', (req,res)=>{
       model: db['items'],
       as: 'item_info',
       nested: true,
+      include: [
+        {
+          model: db["users"],
+          as: "author_info",
+          attributes: [
+            "username",
+            "nickname",
+            "description",
+            "profileimageurl",
+          ],
+        },
+      ],
     }]
   }).then((resp)=>{
     respok(res, null, null, { list: resp });
+  })
+})
+
+router.put('/:id', (req, res)=>{
+  let {id} = req.params;
+  let {status, itemid} = req.body;
+  db['reports'].update({
+   status 
+  },{
+    where:{id},
+    returning: true,
+  }).then((respp)=>{
+    console.log(itemid)
+    console.log('updated')
+    if (status==0){
+      respok(res, null, 'APPROVED')
+    }
+    else if(status==2){
+      db['items'].update({
+        active: 0
+      },{
+        where:{itemid}
+      }).then((resp)=>{
+        respok(res, null, 'REMOVED')
+      })
+    }else{
+      respok(res, null, 'INVESTIGATING')
+    }
   })
 })
 

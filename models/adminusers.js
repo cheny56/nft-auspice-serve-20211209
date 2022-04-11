@@ -75,11 +75,6 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.STRING(80),
       allowNull: true
     },
-    emailverified: {
-      type: DataTypes.INTEGER(4),
-      allowNull: true,
-      defaultValue: 0
-    },
     profileimagesrc: {
       type: DataTypes.STRING(1000),
       allowNull: true
@@ -92,19 +87,9 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.STRING(200),
       allowNull: true
     },
-    agreereceivepromo: {
-      type: DataTypes.INTEGER(4),
-      allowNull: true,
-      defaultValue: 0
-    },
     emailverifiedtimeunix: {
       type: DataTypes.STRING(20),
       allowNull: true
-    },
-    icanmint: {
-      type: DataTypes.INTEGER(4),
-      allowNull: true,
-      defaultValue: 1
     },
     payGas: {
       type: DataTypes.INTEGER(4),
@@ -123,6 +108,10 @@ module.exports = function(sequelize, DataTypes) {
       type: DataTypes.INTEGER(4),
       allowNull: true,
       defaultValue: 1
+    },
+    phone: {
+      type: DataTypes.STRING(100),
+      allowNull: true
     }
   }, {
     sequelize,

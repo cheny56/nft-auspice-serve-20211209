@@ -6,7 +6,7 @@ const {findone , findall , countrows_scalar
 	, createrow 
  }=require('../utils/db')
 const db=require('../models')
-const cliredisa=require('async-redis').createClient(process.env.REDIS_URL)
+const cliredisa=require('async-redis').createClient()
 const { ISFINITE } =require('../utils/common' )
 const LOGGER=console.log
 const adjust_balances_on_transfer=async(from,to,itemid,amount)=>{ LOGGER('JMP0fbrVEb' , from,to,itemid,amount)

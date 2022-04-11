@@ -19,6 +19,7 @@ const favoritesrouter = require("./routes/favorites");
 const itemsrouter = require("./routes/items");
 const merchandisesrouter = require("./routes/merchandises");
 const mintrouter = require("./routes/mint");
+const supportrouter = require("./routes/support");
 const myrouter = require("./routes/my");
 const ordersrouter = require("./routes/orders");
 const queriesrouter = require("./routes/queries");
@@ -91,6 +92,7 @@ app.use("/admin", adminRouter);
 app.use("/bookmarks", bookmarksrouter);
 app.use("/curation", curation)
 app.use("/report", report)
+app.use("/support", supportrouter)
 // app.use(cors({origin:'*'}));
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

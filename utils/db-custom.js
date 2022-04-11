@@ -3,7 +3,7 @@ const KEYS=Object.keys
 const {findone , findall , countrows_scalar }=require('../utils/db')
 const db=require('../models')
 const { findone : findone_mon }=require('./dbmon')
-const cliredisa=require('async-redis').createClient(process.env.REDIS_URL)
+const cliredisa=require('async-redis').createClient()
 const {getMaxMinAvg}=require('./stats') 
 
 const {ISFINITE}=require('../utils/common')

@@ -288,6 +288,7 @@ router.get(
 );
 router.get("/:tablename", (req, res) => {
   let { tablename } = req.params;
+	console.log(process.env.PORT);
   if (MAP_TABLENAME_QUERY_ALLOWED[tablename]) {
   } else {
     resperr(res, messages.MSG_NOT_ALLOWED);
@@ -338,7 +339,7 @@ router.get("/field/:tablename/all", (req, res)=>{ // announcements getter
 
   db[tablename].findAll({
     where:{isPopup: true}
-    , attributes:['createdat', 'title', 'contentbody']
+    , attributes:['id', 'createdat', 'title', 'contentbody']
   }).then((resp)=>{
     respok(res, null, null, {list:resp})
   })
@@ -549,6 +550,7 @@ router.get("/featured/rows/", async (req, res) => {
                   "nickname",
                   "description",
                   "profileimageurl",
+                  "coverimageurl",
                 ],
               },
               {
@@ -573,6 +575,7 @@ router.get("/featured/rows/", async (req, res) => {
                       "nickname",
                       "description",
                       "profileimageurl",
+                      "coverimageurl",
                     ],
                   },
                 ],
@@ -644,6 +647,7 @@ router.get("/featured/rows/:target/:key/:val", async (req, res) => {
                   "nickname",
                   "description",
                   "profileimageurl",
+                  "coverimageurl",
                 ],
               },
             ],
@@ -677,6 +681,7 @@ router.get("/featured/rows/:target/:key/:val", async (req, res) => {
               "nickname",
               "description",
               "profileimageurl",
+              "coverimageurl",
             ],
           },
         ],

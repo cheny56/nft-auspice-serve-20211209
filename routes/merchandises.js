@@ -69,6 +69,7 @@ router.get( '/:filterkey/:orderkey/:offset/:limit' ,async (req,res)=>{ LOGGER(''
 		, pricemax_usd
 	 } =req.query
 	let username=getusernamefromsession ( req)
+	
 	if ( MAP_FILTERKEY[ filterkey ] ){}
 	else {resperr( res, messages.MSG_ARGINVALID ,null , {payload:{reason:'filter' } });return }
 	if ( MAP_ORDERKEY[ orderkey ] ){}
@@ -109,6 +110,8 @@ router.get( '/:filterkey/:orderkey/:offset/:limit' ,async (req,res)=>{ LOGGER(''
 		if ( MAP_SALESTATUS_STR[ salestatusstr ] ) {}
 		else {resperr(res, messages.MSG_ARGINVALID,null , {payload:{reason : 'salestatusstr' }} ) ; return}
 		jfilter[ 'salestatus' ]= MAP_SALESTATUS_STR[ salestatusstr ]  // data >> 2) & 8) | ((data >> 1) & 4) | (data & 3) FROM ...
+		//console.log("AAA:::"+ salestatusstr)
+		
 	}
 	else {}
 	let jfilter_01={}
